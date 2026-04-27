@@ -339,7 +339,7 @@ export class PdfPreview extends Disposable {
       `font-src ${cspSource}`,
       `img-src blob: data: ${cspSource}`,
       `script-src 'nonce-${nonce}' ${cspSource}`,
-      `style-src ${cspSource}`,
+      `style-src 'unsafe-inline' ${cspSource}`,
       `worker-src ${cspSource} blob:`,
     ].join('; ');
 

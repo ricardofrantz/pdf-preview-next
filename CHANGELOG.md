@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.4.3 (2026/04/27)
+
+- Restore `style-src 'unsafe-inline'` in the webview CSP because PDF.js 5 writes
+  page, text-layer, annotation-layer, and scaling geometry through inline style
+  properties at runtime. Scripts remain nonce-bound and eval remains disabled.
+
 ## 1.4.2 (2026/04/27)
 
 - Disable retained hidden webview contexts so hidden PDF previews are recreated

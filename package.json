@@ -2,7 +2,7 @@
   "name": "pdf-preview-next",
   "displayName": "PDF Preview Next",
   "description": "A lightweight PDF preview extension for VS Code with modern PDF.js, reliable refresh, and secure webviews.",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "publisher": "ricardofrantz",
   "engines": {
     "vscode": "^1.95.0",
