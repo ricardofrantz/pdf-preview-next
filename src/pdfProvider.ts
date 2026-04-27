@@ -4,9 +4,6 @@ import { PdfPreview } from './pdfPreview';
 export class PdfCustomProvider implements vscode.CustomReadonlyEditorProvider {
   public static readonly viewType = 'pdf-preview-next.preview';
 
-  private readonly _previews = new Set<PdfPreview>();
-  private _activePreview: PdfPreview | undefined;
-
   constructor(private readonly extensionRoot: vscode.Uri) {}
 
   public openCustomDocument(uri: vscode.Uri): vscode.CustomDocument {
@@ -22,30 +19,6 @@ export class PdfCustomProvider implements vscode.CustomReadonlyEditorProvider {
       document.uri,
       webviewEditor,
     );
-    this._previews.add(preview);
-    this.setActivePreview(preview);
-
-    const stateListener = webviewEditor.onDidChangeViewState(() => {
-      if (webviewEditor.active) {
-        this.setActivePreview(preview);
-      } else if (this._activePreview === preview && !webviewEditor.active) {
-        this.setActivePreview(undefined);
-      }
-    });
-
-    const disposeListener = webviewEditor.onDidDispose(() => {
-      disposeListener.dispose();
-      stateListener.dispose();
-      preview.dispose();
-      this._previews.delete(preview);
-    });
-  }
-
-  public get activePreview(): PdfPreview | undefined {
-    return this._activePreview;
-  }
-
-  private setActivePreview(value: PdfPreview | undefined): void {
-    this._activePreview = value;
+    webviewEditor.onDidDispose(() => preview.dispose());
   }
 }

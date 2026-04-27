@@ -17,6 +17,9 @@ vsc-extension-quickstart.md
 plan.md
 PLAN.md
 SECURITY.md
+AGENTS.md
+CLAUDE.md
+GEMINI.md
 icon.svg
 lib/web/viewer.html
 lib/**/*.map

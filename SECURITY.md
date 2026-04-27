@@ -39,9 +39,10 @@ the webview HTML construction and message channel.
 - **High** — Webview CSP used `script-src 'unsafe-inline'`, which
   defeats CSP's protection against script injection in the viewer.
   Remediated with a per-load script nonce. Tracked in PLAN.md Phase 1.
-- **Medium** — `localResourceRoots` granted the webview read access to
-  the entire directory containing the opened PDF. Recommended fix:
-  scope to the PDF file URI. Remediated in Phase 1.
+- **Medium** — `localResourceRoots` needed tighter bounds. Remediated in
+  Phase 1 by limiting roots to the extension directory and the opened PDF's
+  containing directory, which is the directory-style boundary VS Code webviews
+  support for local resources.
 - **Medium** — CSP omitted `worker-src`; PDF.js spawns a Web Worker.
   Remediated in Phase 1.
 

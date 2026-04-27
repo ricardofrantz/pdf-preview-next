@@ -43,7 +43,7 @@ Until the VS Marketplace publisher is configured, install the VSIX from the
 GitHub release:
 
 ```bash
-code --install-extension pdf-preview-next-1.2.3.vsix --force
+code --install-extension pdf-preview-next-1.3.0.vsix --force
 ```
 
 To make VS Code use this viewer for PDFs:

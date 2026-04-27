@@ -2,10 +2,14 @@
 
 ## Unreleased
 
+## 1.3.0 (2026/04/27)
+
 - Harden webview configuration escaping for PDF paths containing HTML-sensitive
   characters.
 - Resolve extension resource URIs with VS Code URI helpers for better
   cross-platform behavior.
+- Fix PDF live reload by watching the opened file with a directory-relative
+  pattern instead of passing an absolute path as a glob.
 - Keep PDF.js reload cleanup reliable when a reload fails.
 - Stop PDF.js from intercepting VS Code print and command-palette shortcuts.
 - Add defensive support for PDF URL hash destinations.
@@ -13,8 +17,10 @@
 - Exclude PDF.js source maps and debugger files from packaged VSIX builds.
 - Harden the webview CSP with nonce-based scripts and an explicit worker
   policy.
-- Scope webview local resources to the extension and opened PDF.
+- Scope webview local resources to the extension and the opened PDF's
+  containing directory.
 - Disable PDF.js eval support while the PDF.js 5 migration is prepared.
+- Simplify preview disposal and message handling.
 - Modernize the TypeScript, ESLint, Prettier, VS Code test, and VSIX packaging
   toolchain.
 

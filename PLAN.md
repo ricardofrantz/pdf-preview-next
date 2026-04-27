@@ -6,6 +6,20 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 
 ---
 
+## Current Release Prep — 1.3.0
+
+- [x] Cut `CHANGELOG.md`, `package.json`, `package-lock.json`, and README
+  install docs to `1.3.0`
+- [x] Re-run `npm run typecheck`, `npm run lint`, `npm test`, and
+  `npm audit --omit=dev --audit-level=high`
+- [x] Build and inspect `pdf-preview-next-1.3.0.vsix`; package contains 371
+  files, no source maps, no debugger files, no agent docs, and no source TS
+- [ ] Tag or publish `1.3.0`; this should stay gated on an explicit decision
+  about releasing with PDF.js `3.1.81` plus eval disabled, versus completing
+  the PDF.js upgrade first
+
+---
+
 ## Phase 0 — Baseline & Safety Net
 
 - [x] Keep modernization on `main` only, matching the repo branch policy
@@ -31,8 +45,8 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
   - [x] In `src/pdfPreview.ts:getWebviewContents()`, generate `const nonce = crypto.randomBytes(16).toString('base64')`
   - [x] CSP: `script-src 'nonce-${nonce}' ${cspSource}; worker-src ${cspSource} blob:; style-src 'unsafe-inline' ${cspSource}; img-src blob: data: ${cspSource}; connect-src ${cspSource}; default-src 'none';`
   - [x] Add `nonce="${nonce}"` to all four `<script>` tags
-- [x] **Tighten `localResourceRoots`** to the minimum: `[extensionRoot, resource]`
-- [x] **Type the webview message channel** — replace `message: any` with a `WebviewMessage` discriminated union; reject unknown `type` values explicitly
+- [x] **Tighten `localResourceRoots`** to the extension root and the opened PDF's containing directory
+- [x] **Validate the webview message channel** — reject unknown message shapes before dispatch
 - [x] Re-run focused security checks after changes — repository-authored code has 0 critical/high findings; full PDF.js upgrade remains open
 
 ---
