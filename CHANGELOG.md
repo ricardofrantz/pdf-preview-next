@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.4.5 (2026/04/27)
+
+- Read the opened PDF through the webview frame and pass `Uint8Array` data to
+  PDF.js, bypassing range/stream loading against VS Code webview-resource URLs
+  that could leave the viewer stuck at `of 0`.
+- Disable PDF.js range and streaming modes for local webview resources.
+
 ## 1.4.4 (2026/04/27)
 
 - Load the PDF.js core module before dynamically importing the PDF.js viewer

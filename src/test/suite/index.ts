@@ -69,6 +69,10 @@ export async function run(): Promise<void> {
     viewerScriptText,
     /from '.\/pdfjs\/web\/pdf_viewer\.mjs'/,
   );
+  assert.match(viewerScriptText, /fetch\(this\.config\.path/);
+  assert.match(viewerScriptText, /data,\n\s+disableRange: true/);
+  assert.match(viewerScriptText, /disableStream: true/);
+  assert.doesNotMatch(viewerScriptText, /url: this\.config\.path/);
 
   return Promise.resolve();
 }
