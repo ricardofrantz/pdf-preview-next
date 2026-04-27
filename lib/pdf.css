@@ -9,6 +9,7 @@ body {
   background: var(--vscode-editor-background);
   font-family: var(--vscode-font-family);
   font-size: var(--vscode-font-size);
+  -webkit-font-smoothing: antialiased;
 }
 
 button,
@@ -25,18 +26,28 @@ input[type='password'] {
   color: var(--vscode-input-foreground);
   background: var(--vscode-input-background);
   border: 1px solid var(--vscode-input-border, transparent);
-  border-radius: 2px;
+  border-radius: 4px;
   box-sizing: border-box;
-  height: 26px;
+  height: 28px;
 }
 
 button {
   cursor: pointer;
-  padding: 0 8px;
+  min-width: 28px;
+  padding: 0 9px;
+  transition:
+    background-color 120ms ease,
+    opacity 120ms ease,
+    transform 120ms ease;
+  touch-action: manipulation;
 }
 
-button:hover {
+button:hover:not(:disabled) {
   background: var(--vscode-toolbar-hoverBackground);
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.96);
 }
 
 button:disabled {
@@ -44,14 +55,28 @@ button:disabled {
   opacity: 0.55;
 }
 
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--vscode-focusBorder);
+  outline-offset: 1px;
+}
+
+.icon-button {
+  padding-right: 7px;
+  padding-left: 7px;
+  text-align: center;
+}
+
 input[type='number'] {
   width: 64px;
-  padding: 0 4px;
+  padding: 0 5px;
+  font-variant-numeric: tabular-nums;
 }
 
 input[type='search'] {
-  width: 160px;
-  padding: 0 6px;
+  width: 168px;
+  padding: 0 8px;
 }
 
 select {
@@ -72,8 +97,8 @@ select {
   display: flex;
   align-items: center;
   gap: 8px;
-  height: 42px;
-  padding: 7px 8px;
+  height: 44px;
+  padding: 8px 9px;
   overflow-x: auto;
   white-space: nowrap;
   box-sizing: border-box;
@@ -96,7 +121,7 @@ body.theme-inverted {
   display: inline-flex;
   align-items: center;
   flex: 0 0 auto;
-  gap: 4px;
+  gap: 5px;
 }
 
 .toolbar-spacer {
@@ -107,15 +132,29 @@ body.theme-inverted {
 #findStatus,
 #status {
   color: var(--vscode-descriptionForeground);
+  font-variant-numeric: tabular-nums;
 }
 
 #findStatus {
-  min-width: 54px;
+  min-width: 56px;
+  text-align: right;
+}
+
+#status {
+  max-width: min(42vw, 520px);
+  overflow: hidden;
+  opacity: 0;
+  text-overflow: ellipsis;
+  transition: opacity 120ms ease;
+}
+
+#status.is-visible {
+  opacity: 1;
 }
 
 #pdf-content {
   position: absolute;
-  top: 42px;
+  top: 44px;
   right: 0;
   bottom: 0;
   left: 0;
@@ -128,6 +167,7 @@ body.theme-inverted {
   overflow: auto;
   border-right: 1px solid var(--vscode-panel-border);
   background: var(--vscode-sideBar-background, var(--vscode-editor-background));
+  box-shadow: 1px 0 0 rgba(255, 255, 255, 0.04);
 }
 
 .outline-header {
@@ -151,7 +191,7 @@ body.theme-inverted {
   display: block;
   width: 100%;
   height: auto;
-  min-height: 28px;
+  min-height: 30px;
   padding: 5px 8px 5px calc(8px + var(--outline-indent, 0px));
   overflow: hidden;
   border: 0;
@@ -165,6 +205,11 @@ body.theme-inverted {
 
 .outline-item:hover:not(:disabled) {
   background: var(--vscode-list-hoverBackground);
+}
+
+.outline-item:focus-visible {
+  outline: 2px solid var(--vscode-focusBorder);
+  outline-offset: -2px;
 }
 
 .outline-item:disabled {
@@ -367,5 +412,16 @@ body.theme-inverted .pdfViewer .page {
     margin: 0 auto;
     border: 0;
     box-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button,
+  #status {
+    transition: none;
+  }
+
+  button:active:not(:disabled) {
+    transform: none;
   }
 }

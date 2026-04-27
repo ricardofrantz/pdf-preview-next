@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 1.4.2 (2026/04/27)
+
+- Disable retained hidden webview contexts so hidden PDF previews are recreated
+  from the current extension bundle after local VSIX upgrades. This prevents
+  stale panels from trying to load removed extension-resource paths.
+- Smooth the webview toolbar with clearer focus states, button press feedback,
+  tabular page/find counters, and less abrupt status updates.
+- Add a regression assertion that the custom editor keeps retained webview
+  contexts disabled.
+
 ## 1.4.1 (2026/04/27)
 
 - Add commands for opening a PDF preview and reopening the active preview as raw

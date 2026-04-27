@@ -1,6 +1,11 @@
 import * as vscode from 'vscode';
 import { PdfCustomProvider } from './pdfProvider';
 
+export const PDF_WEBVIEW_OPTIONS = {
+  enableFindWidget: false,
+  retainContextWhenHidden: false,
+} satisfies vscode.WebviewPanelOptions;
+
 export function activate(context: vscode.ExtensionContext): void {
   const provider = new PdfCustomProvider(
     context.extensionUri,
@@ -11,10 +16,7 @@ export function activate(context: vscode.ExtensionContext): void {
       PdfCustomProvider.viewType,
       provider,
       {
-        webviewOptions: {
-          enableFindWidget: false, // default
-          retainContextWhenHidden: true,
-        },
+        webviewOptions: PDF_WEBVIEW_OPTIONS,
       },
     ),
     vscode.commands.registerCommand(

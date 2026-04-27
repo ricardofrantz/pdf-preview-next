@@ -113,14 +113,14 @@ const PDF_VIEWER_BODY = `<body>
   <div id="pdf-root">
     <header id="pdf-toolbar" role="toolbar" aria-label="PDF controls">
       <div class="toolbar-group">
-        <button id="previous" type="button" title="Previous page">Prev</button>
-        <button id="next" type="button" title="Next page">Next</button>
-        <input id="pageNumber" type="number" min="1" value="1" title="Page">
+        <button id="previous" class="icon-button" type="button" title="Previous page" aria-label="Previous page">Prev</button>
+        <button id="next" class="icon-button" type="button" title="Next page" aria-label="Next page">Next</button>
+        <input id="pageNumber" type="number" min="1" value="1" title="Page" aria-label="Page number">
         <span id="numPages">of 0</span>
       </div>
       <div class="toolbar-group">
-        <button id="zoomOut" type="button" title="Zoom out">-</button>
-        <select id="scaleSelect" title="Zoom">
+        <button id="zoomOut" class="icon-button" type="button" title="Zoom out" aria-label="Zoom out">-</button>
+        <select id="scaleSelect" title="Zoom" aria-label="Zoom">
           <option value="auto">Auto</option>
           <option value="page-actual">Actual</option>
           <option value="page-fit">Fit</option>
@@ -134,13 +134,13 @@ const PDF_VIEWER_BODY = `<body>
           <option value="3">300%</option>
           <option value="4">400%</option>
         </select>
-        <button id="zoomIn" type="button" title="Zoom in">+</button>
+        <button id="zoomIn" class="icon-button" type="button" title="Zoom in" aria-label="Zoom in">+</button>
       </div>
       <div class="toolbar-group toolbar-find">
-        <input id="findInput" type="search" placeholder="Find" title="Find in document">
-        <button id="findPrevious" type="button" title="Previous match">Prev</button>
-        <button id="findNext" type="button" title="Next match">Next</button>
-        <span id="findStatus"></span>
+        <input id="findInput" type="search" placeholder="Find" title="Find in document" aria-label="Find in document">
+        <button id="findPrevious" class="icon-button" type="button" title="Previous match" aria-label="Previous match">Prev</button>
+        <button id="findNext" class="icon-button" type="button" title="Next match" aria-label="Next match">Next</button>
+        <span id="findStatus" aria-live="polite"></span>
       </div>
       <div class="toolbar-group toolbar-spacer"></div>
       <div class="toolbar-group">
@@ -149,7 +149,7 @@ const PDF_VIEWER_BODY = `<body>
         <button id="reload" type="button" title="Refresh PDF">Refresh</button>
         <button id="openSource" type="button" title="Open raw PDF source with VS Code's default editor">Source</button>
       </div>
-      <span id="status" role="status"></span>
+      <span id="status" role="status" aria-live="polite"></span>
     </header>
     <div id="pdf-content">
       <aside id="outlineSidebar" class="outline-sidebar hidden" aria-label="Document outline">

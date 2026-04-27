@@ -1,5 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
+import { PDF_WEBVIEW_OPTIONS } from '../../extension';
 
 export function run(): Promise<void> {
   const extension = vscode.extensions.all.find(
@@ -34,6 +35,7 @@ export function run(): Promise<void> {
   );
   assert.ok(commandIds.has('pdf-preview.refreshPreview'));
   assert.ok(commandIds.has('pdf-preview.print'));
+  assert.strictEqual(PDF_WEBVIEW_OPTIONS.retainContextWhenHidden, false);
 
   return Promise.resolve();
 }
