@@ -25,7 +25,8 @@ will grow through small, practical improvements.
 
 This repository has been security-audited by **Claude Opus 4.7** (April 2026).
 The current runtime uses `pdfjs-dist@5.6.205` with nonce-based webview scripts,
-scoped resource roots, an explicit worker policy, and PDF.js eval disabled.
+scoped resource roots, an explicit worker policy, and PDF.js eval/WASM
+execution disabled.
 
 ## Settings
 

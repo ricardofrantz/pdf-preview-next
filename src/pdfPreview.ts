@@ -7,6 +7,19 @@ function createNonce(): string {
   return crypto.randomBytes(16).toString('base64');
 }
 
+function isReopenAsTextMessage(message: unknown): boolean {
+  if (!message || typeof message !== 'object') {
+    return false;
+  }
+
+  const keys = Object.keys(message);
+  return (
+    keys.length === 1 &&
+    keys[0] === 'type' &&
+    (message as { type?: unknown }).type === 'reopen-as-text'
+  );
+}
+
 const PDF_VIEWER_BODY = `<body>
   <div id="pdf-root">
     <header id="pdf-toolbar" role="toolbar" aria-label="PDF controls">
@@ -80,11 +93,7 @@ export class PdfPreview extends Disposable {
 
     this._register(
       webviewEditor.webview.onDidReceiveMessage((message: unknown) => {
-        if (
-          !message ||
-          typeof message !== 'object' ||
-          (message as { type?: unknown }).type !== 'reopen-as-text'
-        ) {
+        if (!isReopenAsTextMessage(message)) {
           return;
         }
         vscode.commands.executeCommand(
@@ -129,44 +138,25 @@ export class PdfPreview extends Disposable {
     const docPath = webview.asWebviewUri(this.resource);
     const cspSource = webview.cspSource;
     const nonce = createNonce();
-    const resolveAsUri = (...p: string[]): vscode.Uri => {
-      return webview.asWebviewUri(
-        vscode.Uri.joinPath(this.extensionRoot, ...p),
-      );
-    };
-    const resolveDirectoryAsUri = (...p: string[]): string => {
-      return `${resolveAsUri(...p).toString()}/`;
-    };
+
+    const resolve = (...parts: string[]): string =>
+      webview
+        .asWebviewUri(vscode.Uri.joinPath(this.extensionRoot, ...parts))
+        .toString();
+    const resolveDir = (...parts: string[]): string => `${resolve(...parts)}/`;
+
+    const pdfjsDir = ['lib', 'pdfjs'];
+    const buildDir = [...pdfjsDir, 'build'];
 
     const config = vscode.workspace.getConfiguration('pdf-preview');
     const settings = {
-      cMapUrl: resolveDirectoryAsUri('lib', 'pdfjs', 'cmaps'),
-      iccUrl: resolveDirectoryAsUri('lib', 'pdfjs', 'iccs'),
-      imageResourcesPath: resolveDirectoryAsUri(
-        'lib',
-        'pdfjs',
-        'web',
-        'images',
-      ),
+      cMapUrl: resolveDir(...pdfjsDir, 'cmaps'),
+      iccUrl: resolveDir(...pdfjsDir, 'iccs'),
+      imageResourcesPath: resolveDir(...pdfjsDir, 'web', 'images'),
       path: docPath.toString(),
-      sandboxBundleSrc: resolveAsUri(
-        'lib',
-        'pdfjs',
-        'build',
-        'pdf.sandbox.min.mjs',
-      ).toString(),
-      standardFontDataUrl: resolveDirectoryAsUri(
-        'lib',
-        'pdfjs',
-        'standard_fonts',
-      ),
-      wasmUrl: resolveDirectoryAsUri('lib', 'pdfjs', 'wasm'),
-      workerSrc: resolveAsUri(
-        'lib',
-        'pdfjs',
-        'build',
-        'pdf.worker.min.mjs',
-      ).toString(),
+      standardFontDataUrl: resolveDir(...pdfjsDir, 'standard_fonts'),
+      wasmUrl: resolveDir(...pdfjsDir, 'wasm'),
+      workerSrc: resolve(...buildDir, 'pdf.worker.min.mjs'),
       defaults: {
         cursor: config.get<string>('default.cursor'),
         scale: config.get<string>('default.scale'),
@@ -175,13 +165,14 @@ export class PdfPreview extends Disposable {
         spreadMode: config.get<string>('default.spreadMode'),
       },
     };
+
     const csp = [
       "default-src 'none'",
       `connect-src ${cspSource}`,
       `font-src ${cspSource}`,
       `img-src blob: data: ${cspSource}`,
-      `script-src 'nonce-${nonce}' 'wasm-unsafe-eval' ${cspSource}`,
-      `style-src 'unsafe-inline' ${cspSource}`,
+      `script-src 'nonce-${nonce}' ${cspSource}`,
+      `style-src ${cspSource}`,
       `worker-src ${cspSource} blob:`,
     ].join('; ');
 
@@ -195,9 +186,9 @@ export class PdfPreview extends Disposable {
 <meta http-equiv="Content-Security-Policy" content="${csp}">
 <meta id="pdf-preview-config" data-config="${JSON.stringify(settings).replace(/"/g, '&quot;')}">
 <title>PDF Preview Next</title>
-<link rel="stylesheet" href="${resolveAsUri('lib', 'pdfjs', 'web', 'pdf_viewer.css')}">
-<link rel="stylesheet" href="${resolveAsUri('lib', 'pdf.css')}">
-<script nonce="${nonce}" type="module" src="${resolveAsUri('lib', 'main.mjs')}"></script>
+<link rel="stylesheet" href="${resolve(...pdfjsDir, 'web', 'pdf_viewer.css')}">
+<link rel="stylesheet" href="${resolve('lib', 'pdf.css')}">
+<script nonce="${nonce}" type="module" src="${resolve('lib', 'main.mjs')}"></script>
 </head>`;
 
     return head + PDF_VIEWER_BODY + '</html>';

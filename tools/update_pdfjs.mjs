@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import fs from 'node:fs';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -7,105 +7,12 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, '..');
 const configPath = path.join(scriptDir, 'update_pdfjs.jsonc');
 
-function stripJsonComments(input) {
-  let output = '';
-  let inString = false;
-  let quote = '';
-  let escaped = false;
-
-  for (let i = 0; i < input.length; i += 1) {
-    const char = input[i];
-    const next = input[i + 1];
-
-    if (inString) {
-      output += char;
-      if (escaped) {
-        escaped = false;
-      } else if (char === '\\') {
-        escaped = true;
-      } else if (char === quote) {
-        inString = false;
-      }
-      continue;
-    }
-
-    if (char === '"' || char === "'") {
-      inString = true;
-      quote = char;
-      output += char;
-      continue;
-    }
-
-    if (char === '/' && next === '/') {
-      while (i < input.length && input[i] !== '\n') {
-        i += 1;
-      }
-      output += '\n';
-      continue;
-    }
-
-    if (char === '/' && next === '*') {
-      i += 2;
-      while (i < input.length && !(input[i] === '*' && input[i + 1] === '/')) {
-        i += 1;
-      }
-      i += 1;
-      continue;
-    }
-
-    output += char;
-  }
-
-  return output;
-}
-
-function removeTrailingCommas(input) {
-  let output = '';
-  let inString = false;
-  let quote = '';
-  let escaped = false;
-
-  for (let i = 0; i < input.length; i += 1) {
-    const char = input[i];
-
-    if (inString) {
-      output += char;
-      if (escaped) {
-        escaped = false;
-      } else if (char === '\\') {
-        escaped = true;
-      } else if (char === quote) {
-        inString = false;
-      }
-      continue;
-    }
-
-    if (char === '"' || char === "'") {
-      inString = true;
-      quote = char;
-      output += char;
-      continue;
-    }
-
-    if (char === ',') {
-      let j = i + 1;
-      while (j < input.length && /\s/.test(input[j])) {
-        j += 1;
-      }
-      if (input[j] === '}' || input[j] === ']') {
-        continue;
-      }
-    }
-
-    output += char;
-  }
-
-  return output;
-}
-
-function readConfig() {
-  const source = fs.readFileSync(configPath, 'utf8');
-  return JSON.parse(removeTrailingCommas(stripJsonComments(source)));
+function parseJsonc(source) {
+  const stripped = source
+    .replace(/\/\/.*/g, '')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/,(\s*[\]}])/g, '$1');
+  return JSON.parse(stripped);
 }
 
 function repoPath(relativePath) {
@@ -116,53 +23,32 @@ function repoPath(relativePath) {
   return resolved;
 }
 
-function run(command, args, options = {}) {
+function run(command, args) {
   return execFileSync(command, args, {
     cwd: repoRoot,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'inherit'],
-    ...options,
   });
 }
 
-function copyEntry(sourceRoot, entry) {
+async function copyEntry(sourceRoot, entry) {
   const source = path.join(sourceRoot, entry.from);
   const destination = repoPath(entry.to);
 
-  if (!fs.existsSync(source)) {
-    throw new Error(`Missing PDF.js source path: ${entry.from}`);
-  }
-
-  fs.mkdirSync(path.dirname(destination), { recursive: true });
-  const stat = fs.statSync(source);
-  if (stat.isDirectory()) {
-    fs.rmSync(destination, { recursive: true, force: true });
-    fs.cpSync(source, destination, { recursive: true });
-  } else {
-    fs.copyFileSync(source, destination);
-  }
+  await fs.mkdir(path.dirname(destination), { recursive: true });
+  await fs.rm(destination, { recursive: true, force: true });
+  await fs.cp(source, destination, { recursive: true });
 }
 
-function writeVersionFile(config) {
-  const contents = [
-    config.version,
-    '',
-    `Source: ${config.packageName}@${config.version}`,
-    `Integrity: ${config.integrity}`,
-    'Runtime: vendored PDF.js ESM files under lib/pdfjs.',
-    '',
-  ].join('\n');
-  fs.writeFileSync(repoPath(config.versionFile), contents, 'utf8');
-}
-
-function main() {
-  const config = readConfig();
+async function main() {
+  const config = parseJsonc(await fs.readFile(configPath, 'utf8'));
   const workDirectory = repoPath(config.workDirectory);
   const sourceDirectory = repoPath(config.sourceDirectory);
 
-  fs.mkdirSync(workDirectory, { recursive: true });
-  fs.rmSync(sourceDirectory, { recursive: true, force: true });
+  await fs.mkdir(workDirectory, { recursive: true });
+  await fs.rm(sourceDirectory, { recursive: true, force: true });
 
+  console.log(`Downloading ${config.packageName}@${config.version}...`);
   const packOutput = run('npm', [
     'pack',
     `${config.packageName}@${config.version}`,
@@ -173,24 +59,30 @@ function main() {
   const [packInfo] = JSON.parse(packOutput);
 
   if (packInfo.integrity !== config.integrity) {
-    throw new Error(
-      `Integrity mismatch for ${packInfo.id}: ${packInfo.integrity} !== ${config.integrity}`,
-    );
+    throw new Error(`Integrity mismatch: ${packInfo.integrity} !== ${config.integrity}`);
   }
 
   const tarball = path.join(workDirectory, packInfo.filename);
   run('tar', ['-xzf', tarball, '-C', workDirectory]);
 
-  for (const removePath of config.remove) {
-    fs.rmSync(repoPath(removePath), { recursive: true, force: true });
-  }
+  await Promise.all(
+    config.remove.map((p) => fs.rm(repoPath(p), { recursive: true, force: true })),
+  );
+  await Promise.all(config.copy.map((entry) => copyEntry(sourceDirectory, entry)));
 
-  for (const entry of config.copy) {
-    copyEntry(sourceDirectory, entry);
-  }
+  const versionContent = [
+    `Version: ${config.version}`,
+    `Source: ${config.packageName}@${config.version}`,
+    `Integrity: ${config.integrity}`,
+    `Date: ${new Date().toISOString()}`,
+    '',
+  ].join('\n');
+  await fs.writeFile(repoPath(config.versionFile), versionContent);
 
-  writeVersionFile(config);
-  console.log(`Vendored ${config.packageName}@${config.version}.`);
+  console.log(`Successfully vendored PDF.js ${config.version}.`);
 }
 
-main();
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

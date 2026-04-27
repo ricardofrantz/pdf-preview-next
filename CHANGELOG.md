@@ -7,8 +7,8 @@
 - Upgrade the vendored PDF.js runtime to `pdfjs-dist@5.6.205`.
 - Replace the legacy global `PDFViewerApplication` integration with a small
   ESM viewer shell owned by this extension.
-- Keep PDF.js eval disabled while allowing PDF.js's WASM image/font helpers
-  through the webview CSP.
+- Keep PDF.js eval and WASM execution disabled so the webview CSP does not need
+  `unsafe-eval`, `wasm-unsafe-eval`, or inline styles.
 - Preserve live-reload behavior without patching PDF.js private viewer
   internals.
 - Add built-in page navigation, zoom, find, password prompt, and hand-scroll
@@ -17,6 +17,7 @@
   verification for future PDF.js upgrades.
 - Remove the old PDF.js 3 full viewer, locales, source maps, and debugger
   artifacts from the vendored runtime.
+- Do not package unused PDF.js scripting sandbox or WASM decoder binaries.
 
 ## 1.3.0 (2026/04/27)
 

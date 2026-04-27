@@ -58,3 +58,5 @@ the webview HTML construction and message channel.
 - No GitHub Actions workflows present, so no workflow-injection surface.
 
 **Status.** Webview hardening and the PDF.js 5 runtime migration have landed.
+The v1.4 webview CSP now avoids inline styles and WebAssembly execution
+permission; PDF.js runs with JavaScript evaluation and WASM disabled.

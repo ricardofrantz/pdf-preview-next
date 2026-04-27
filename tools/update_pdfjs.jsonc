@@ -19,16 +19,22 @@
       "from": "build/pdf.worker.min.mjs",
       "to": "lib/pdfjs/build/pdf.worker.min.mjs",
     },
-    {
-      "from": "build/pdf.sandbox.min.mjs",
-      "to": "lib/pdfjs/build/pdf.sandbox.min.mjs",
-    },
     { "from": "web/pdf_viewer.mjs", "to": "lib/pdfjs/web/pdf_viewer.mjs" },
     { "from": "web/pdf_viewer.css", "to": "lib/pdfjs/web/pdf_viewer.css" },
     { "from": "web/images", "to": "lib/pdfjs/web/images" },
     { "from": "cmaps", "to": "lib/pdfjs/cmaps" },
     { "from": "standard_fonts", "to": "lib/pdfjs/standard_fonts" },
-    { "from": "wasm", "to": "lib/pdfjs/wasm" },
+    // PDF.js runs with useWasm=false to avoid webview wasm-eval CSP permission.
+    // Keep the OpenJPEG JavaScript fallback that PDF.js imports from wasmUrl.
+    {
+      "from": "wasm/openjpeg_nowasm_fallback.js",
+      "to": "lib/pdfjs/wasm/openjpeg_nowasm_fallback.js",
+    },
+    { "from": "wasm/LICENSE_OPENJPEG", "to": "lib/pdfjs/wasm/LICENSE_OPENJPEG" },
+    {
+      "from": "wasm/LICENSE_PDFJS_OPENJPEG",
+      "to": "lib/pdfjs/wasm/LICENSE_PDFJS_OPENJPEG",
+    },
     { "from": "iccs", "to": "lib/pdfjs/iccs" },
   ],
 
