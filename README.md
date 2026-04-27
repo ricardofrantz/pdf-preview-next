@@ -38,6 +38,7 @@ execution disabled.
 - `pdf-preview.default.scrollMode`
 - `pdf-preview.default.spreadMode`
 - `pdf-preview.reload.closeOnDelete`
+- `pdf-preview.reload.debounceMs`
 - `pdf-preview.appearance.theme`
 - `pdf-preview.appearance.pageGap`
 
@@ -45,9 +46,16 @@ execution disabled.
 
 - `PDF Preview Next: Open Preview` opens a PDF with this viewer.
 - `PDF Preview Next: Open Source` opens the active PDF preview as raw source.
+- `PDF Preview Next: Refresh Preview` refreshes the active PDF preview.
+- `PDF Preview Next: Print` prints the active PDF preview.
 - The toolbar `Source` button opens the raw PDF with VS Code's default editor.
 - The toolbar `Outline` button shows PDF bookmarks when the document provides
   an outline.
+- The toolbar `Refresh` button and `Ctrl+R` / `Cmd+R` refresh the current PDF
+  without losing the current page, zoom, scroll, or outline-sidebar state.
+- The toolbar `Print` button uses the webview print path when VS Code exposes
+  it. If the print dialog is unavailable, open the PDF externally or through
+  `Source` and print from the system PDF viewer.
 - Inside the viewer, `j/k/h/l` scroll, `n/p` or `./,` move pages, `g/G` jump to
   first/last page, and `+/-` zoom.
 
@@ -55,18 +63,19 @@ execution disabled.
 
 The fork now covers the practical upstream requests for newer PDF.js, live
 reload, raw source access, outline/bookmark navigation, per-PDF view-state
-restore, temporary delete/recreate build workflows, appearance controls, and
-keyboard navigation. PDF editing, persistent annotations, delete-pages support,
-and a public cross-extension PDF.js API are intentionally deferred because they
-would turn this previewer into a PDF editor or platform surface.
+restore, temporary delete/recreate build workflows, debounced refresh, printing
+entry points, appearance controls, text selection/copy polish, and keyboard
+navigation. PDF editing, persistent annotations, delete-pages support, and a
+public cross-extension PDF.js API are intentionally deferred because they would
+turn this previewer into a PDF editor or platform surface.
 
 ## Install From Release
 
-Until the VS Marketplace publisher is configured, install the VSIX from the
-GitHub release:
+Install the VSIX from the GitHub release, or from the VS Code Marketplace once
+the publisher token is configured:
 
 ```bash
-code --install-extension pdf-preview-next-1.4.0.vsix --force
+code --install-extension pdf-preview-next-1.4.1.vsix --force
 ```
 
 To make VS Code use this viewer for PDFs:

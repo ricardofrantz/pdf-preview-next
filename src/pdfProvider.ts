@@ -53,4 +53,26 @@ export class PdfCustomProvider implements vscode.CustomReadonlyEditorProvider {
 
     await this.activePreview.openSource();
   }
+
+  public async refreshActivePreview(): Promise<void> {
+    if (!this.activePreview) {
+      await vscode.window.showInformationMessage(
+        'Open a PDF Preview Next tab first.',
+      );
+      return;
+    }
+
+    this.activePreview.refresh();
+  }
+
+  public async printActivePreview(): Promise<void> {
+    if (!this.activePreview) {
+      await vscode.window.showInformationMessage(
+        'Open a PDF Preview Next tab first.',
+      );
+      return;
+    }
+
+    this.activePreview.print();
+  }
 }

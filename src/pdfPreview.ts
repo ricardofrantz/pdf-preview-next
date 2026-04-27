@@ -12,36 +12,41 @@ interface PersistedViewState {
   scaleValue: string;
   scrollLeft: number;
   scrollTop: number;
+  outlineVisible?: boolean;
 }
 
 type WebviewMessage =
+  | { type: 'open-external' }
   | { type: 'open-source' }
   | { type: 'view-state'; state: PersistedViewState };
+
+const DEFAULT_RELOAD_DEBOUNCE_MS = 800;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
-function hasExactKeys(
+function hasExpectedKeys(
   value: Record<string, unknown>,
-  expectedKeys: string[],
+  requiredKeys: string[],
+  optionalKeys: string[] = [],
 ): boolean {
   const keys = Object.keys(value);
+  const allowedKeys = new Set([...requiredKeys, ...optionalKeys]);
   return (
-    keys.length === expectedKeys.length &&
-    expectedKeys.every((key) => keys.includes(key))
+    requiredKeys.every((key) => keys.includes(key)) &&
+    keys.every((key) => allowedKeys.has(key))
   );
 }
 
 function isPersistedViewState(value: unknown): value is PersistedViewState {
   if (
     !isRecord(value) ||
-    !hasExactKeys(value, [
-      'pageNumber',
-      'scaleValue',
-      'scrollLeft',
-      'scrollTop',
-    ])
+    !hasExpectedKeys(
+      value,
+      ['pageNumber', 'scaleValue', 'scrollLeft', 'scrollTop'],
+      ['outlineVisible'],
+    )
   ) {
     return false;
   }
@@ -54,7 +59,9 @@ function isPersistedViewState(value: unknown): value is PersistedViewState {
     typeof value.scrollLeft === 'number' &&
     Number.isFinite(value.scrollLeft) &&
     typeof value.scrollTop === 'number' &&
-    Number.isFinite(value.scrollTop)
+    Number.isFinite(value.scrollTop) &&
+    (value.outlineVisible === undefined ||
+      typeof value.outlineVisible === 'boolean')
   );
 }
 
@@ -63,12 +70,16 @@ function getWebviewMessage(message: unknown): WebviewMessage | undefined {
     return undefined;
   }
 
-  if (hasExactKeys(message, ['type']) && message.type === 'open-source') {
+  if (hasExpectedKeys(message, ['type']) && message.type === 'open-source') {
     return { type: 'open-source' };
   }
 
+  if (hasExpectedKeys(message, ['type']) && message.type === 'open-external') {
+    return { type: 'open-external' };
+  }
+
   if (
-    hasExactKeys(message, ['type', 'state']) &&
+    hasExpectedKeys(message, ['type', 'state']) &&
     message.type === 'view-state' &&
     isPersistedViewState(message.state)
   ) {
@@ -86,6 +97,16 @@ function persistedViewStateOrUndefined(
   value: unknown,
 ): PersistedViewState | undefined {
   return isPersistedViewState(value) ? value : undefined;
+}
+
+function getReloadDebounceMs(): number {
+  const value = vscode.workspace
+    .getConfiguration('pdf-preview')
+    .get<number>('reload.debounceMs', DEFAULT_RELOAD_DEBOUNCE_MS);
+  if (!Number.isFinite(value)) {
+    return DEFAULT_RELOAD_DEBOUNCE_MS;
+  }
+  return Math.min(Math.max(Math.trunc(value), 0), 10_000);
 }
 
 const PDF_VIEWER_BODY = `<body>
@@ -124,7 +145,8 @@ const PDF_VIEWER_BODY = `<body>
       <div class="toolbar-group toolbar-spacer"></div>
       <div class="toolbar-group">
         <button id="outlineToggle" type="button" title="Toggle document outline" disabled>Outline</button>
-        <button id="reload" type="button" title="Reload PDF">Reload</button>
+        <button id="print" type="button" title="Print PDF">Print</button>
+        <button id="reload" type="button" title="Refresh PDF">Refresh</button>
         <button id="openSource" type="button" title="Open raw PDF source with VS Code's default editor">Source</button>
       </div>
       <span id="status" role="status"></span>
@@ -153,6 +175,8 @@ const PDF_VIEWER_BODY = `<body>
 </body>`;
 
 export class PdfPreview extends Disposable {
+  private reloadTimer: ReturnType<typeof setTimeout> | undefined;
+
   constructor(
     private readonly extensionRoot: vscode.Uri,
     private readonly resource: vscode.Uri,
@@ -178,6 +202,8 @@ export class PdfPreview extends Disposable {
 
         if (parsedMessage.type === 'open-source') {
           void this.openSource();
+        } else if (parsedMessage.type === 'open-external') {
+          void this.openExternal();
         } else {
           void this.workspaceState.update(
             viewStateKey(this.resource),
@@ -197,16 +223,17 @@ export class PdfPreview extends Disposable {
     );
     this._register(
       watcher.onDidChange(() => {
-        this.reload();
+        this.scheduleReload();
       }),
     );
     this._register(
       watcher.onDidCreate(() => {
-        this.reload();
+        this.scheduleReload();
       }),
     );
     this._register(
       watcher.onDidDelete(() => {
+        this.clearReloadTimer();
         if (closeOnDelete) {
           this.webviewEditor.dispose();
           return;
@@ -215,6 +242,7 @@ export class PdfPreview extends Disposable {
         void this.webviewEditor.webview.postMessage({ type: 'file-deleted' });
       }),
     );
+    this._register({ dispose: () => this.clearReloadTimer() });
 
     this.webviewEditor.webview.html = this.getWebviewContents();
   }
@@ -230,9 +258,34 @@ export class PdfPreview extends Disposable {
     );
   }
 
-  private reload(): void {
+  public async openExternal(): Promise<void> {
+    await vscode.env.openExternal(this.resource);
+  }
+
+  public refresh(): void {
     if (!this.isDisposed) {
       this.webviewEditor.webview.postMessage({ type: 'reload' });
+    }
+  }
+
+  public print(): void {
+    if (!this.isDisposed) {
+      this.webviewEditor.webview.postMessage({ type: 'print' });
+    }
+  }
+
+  private scheduleReload(): void {
+    this.clearReloadTimer();
+    this.reloadTimer = setTimeout(() => {
+      this.reloadTimer = undefined;
+      this.refresh();
+    }, getReloadDebounceMs());
+  }
+
+  private clearReloadTimer(): void {
+    if (this.reloadTimer) {
+      clearTimeout(this.reloadTimer);
+      this.reloadTimer = undefined;
     }
   }
 
@@ -271,6 +324,9 @@ export class PdfPreview extends Disposable {
       appearance: {
         pageGap: config.get<string>('appearance.pageGap'),
         theme: config.get<string>('appearance.theme'),
+      },
+      reload: {
+        debounceMs: getReloadDebounceMs(),
       },
       initialViewState: persistedViewStateOrUndefined(
         this.workspaceState.get(viewStateKey(this.resource)),

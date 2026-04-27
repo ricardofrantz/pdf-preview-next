@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.4.1 (2026/04/27)
+
 - Add commands for opening a PDF preview and reopening the active preview as raw
   PDF source.
 - Add an outline sidebar for PDFs that provide bookmarks, wired to the existing
@@ -12,6 +14,20 @@
   `pdf-preview.reload.closeOnDelete` restores the old close-on-delete behavior.
 - Add finite appearance settings for dark/inverted viewing and page spacing.
 - Add lightweight in-viewer keyboard navigation shortcuts.
+- Add a visible `Refresh` toolbar button, `PDF Preview Next: Refresh Preview`
+  command, and `Ctrl+R` / `Cmd+R` in-viewer refresh.
+- Debounce automatic refresh after file changes with
+  `pdf-preview.reload.debounceMs`, preserving the previous rendered PDF and
+  retrying once if a rebuild temporarily writes an incomplete file.
+- Preserve manual outline-sidebar visibility across refreshes.
+- Add a visible `Print` toolbar button and `PDF Preview Next: Print` command.
+  The webview tries the browser print path first and falls back to opening the
+  PDF externally when printing is unavailable.
+- Improve hand-scroll behavior so text selection/copy and text dragging do not
+  start pointer-captured drag scrolling.
+- Add CI and tag-release workflows for tests, VSIX packaging, content scanning,
+  GitHub release assets, VS Code Marketplace publishing, and Open VSX publishing
+  when tokens are configured.
 - Document which deprecated upstream issues are now covered and which editor/API
   requests remain out of scope.
 

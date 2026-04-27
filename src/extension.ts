@@ -43,6 +43,12 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('pdf-preview.openSource', async () => {
       await provider.openSourceForActivePreview();
     }),
+    vscode.commands.registerCommand('pdf-preview.refreshPreview', async () => {
+      await provider.refreshActivePreview();
+    }),
+    vscode.commands.registerCommand('pdf-preview.print', async () => {
+      await provider.printActivePreview();
+    }),
   );
 }
 

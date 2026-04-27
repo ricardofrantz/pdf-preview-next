@@ -1,19 +1,23 @@
 {
   "name": "pdf-preview-next",
   "displayName": "PDF Preview Next",
-  "description": "Ricardo's improved PDF preview extension for VS Code.",
-  "version": "1.4.0",
+  "description": "A lightweight PDF preview extension for VS Code with modern PDF.js, reliable refresh, and secure webviews.",
+  "version": "1.4.1",
   "publisher": "ricardofrantz",
   "engines": {
     "vscode": "^1.95.0",
     "node": ">=22"
   },
   "categories": [
-    "Programming Languages"
+    "Visualization"
   ],
   "keywords": [
     "pdf",
-    "viewer"
+    "viewer",
+    "preview",
+    "pdfjs",
+    "latex",
+    "typst"
   ],
   "icon": "icon.png",
   "repository": {
@@ -26,7 +30,9 @@
   "activationEvents": [
     "onCustomEditor:pdf-preview-next.preview",
     "onCommand:pdf-preview.openPreview",
-    "onCommand:pdf-preview.openSource"
+    "onCommand:pdf-preview.openSource",
+    "onCommand:pdf-preview.refreshPreview",
+    "onCommand:pdf-preview.print"
   ],
   "main": "./out/src/extension",
   "contributes": {
@@ -54,6 +60,14 @@
       {
         "command": "pdf-preview.openSource",
         "title": "PDF Preview Next: Open Source"
+      },
+      {
+        "command": "pdf-preview.refreshPreview",
+        "title": "PDF Preview Next: Refresh Preview"
+      },
+      {
+        "command": "pdf-preview.print",
+        "title": "PDF Preview Next: Print"
       }
     ],
     "configuration": {
@@ -105,6 +119,13 @@
           "type": "boolean",
           "default": false
         },
+        "pdf-preview.reload.debounceMs": {
+          "markdownDescription": "Milliseconds to wait after PDF file change notifications before refreshing the preview. Increase this if your build tool writes PDFs in multiple bursts.",
+          "type": "number",
+          "default": 800,
+          "minimum": 0,
+          "maximum": 10000
+        },
         "pdf-preview.appearance.theme": {
           "markdownDescription": "Preview appearance. `auto` follows VS Code colors, `dark` darkens chrome, and `inverted` also inverts rendered PDF pages.",
           "type": "string",
@@ -140,7 +161,8 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
     "update:pdfjs": "node ./tools/update_pdfjs.mjs",
-    "package": "vsce package"
+    "package": "vsce package",
+    "package:scan": "node ./tools/scan_vsix.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
