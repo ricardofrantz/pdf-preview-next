@@ -1,9 +1,14 @@
-import * as path from 'path';
 import * as vscode from 'vscode';
 import { Disposable } from './disposable';
 
 function escapeAttribute(value: string | vscode.Uri): string {
-  return value.toString().replace(/"/g, '&quot;');
+  return value
+    .toString()
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 type PreviewState = 'Disposed' | 'Visible' | 'Active';
@@ -99,8 +104,9 @@ export class PdfPreview extends Disposable {
     const docPath = webview.asWebviewUri(this.resource);
     const cspSource = webview.cspSource;
     const resolveAsUri = (...p: string[]): vscode.Uri => {
-      const uri = vscode.Uri.file(path.join(this.extensionRoot.path, ...p));
-      return webview.asWebviewUri(uri);
+      return webview.asWebviewUri(
+        vscode.Uri.joinPath(this.extensionRoot, ...p)
+      );
     };
 
     const config = vscode.workspace.getConfiguration('pdf-preview');
@@ -539,8 +545,6 @@ export class PdfPreview extends Disposable {
     <input type="file" id="fileInput" class="hidden">
   </body>`;
 
-    const tail = ['</html>'].join('\n');
-
-    return head + body + tail;
+    return head + body + '</html>';
   }
 }

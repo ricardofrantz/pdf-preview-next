@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- Harden webview configuration escaping for PDF paths containing HTML-sensitive
+  characters.
+- Resolve extension resource URIs with VS Code URI helpers for better
+  cross-platform behavior.
+- Keep PDF.js reload cleanup reliable when a reload fails.
+- Stop PDF.js from intercepting VS Code print and command-palette shortcuts.
+- Add defensive support for PDF URL hash destinations.
+- Keep PDF annotation popup text readable.
+- Exclude PDF.js source maps and debugger files from packaged VSIX builds.
+
 ## 1.2.3 (2026/04/27)
 
 - Publish improved fork under the `pdf-preview-next` identity.
