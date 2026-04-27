@@ -1,18 +1,25 @@
 # PDF Preview Next
 
-Ricardo's improved fork of `tomoki1207/vscode-pdfviewer` for displaying PDF
-files in VS Code.
+Simple, lightweight PDF preview for VS Code.
 
-This fork keeps the existing `pdf-preview.*` settings for compatibility, but it
-uses its own extension identity so it can be installed and updated independently
-from `tomoki1207.pdf`.
+PDF Preview Next is Ricardo's improved fork of `tomoki1207/vscode-pdfviewer`.
+The goal is a small extension that opens PDFs quickly, keeps the viewer behavior
+predictable, and avoids unnecessary features.
 
 ## Why this fork exists
 
 The original extension has not had maintainer-authored code changes since 2022,
 while issues and pull requests remain open. This fork carries local fixes and
-will grow through small, practical improvements without waiting on the original
-package.
+will grow through small, practical improvements.
+
+## Direction
+
+- Keep the extension simple.
+- Keep startup and reload behavior fast.
+- Keep the packaged runtime as small as practical.
+- Prefer stable PDF.js behavior over one-off patches.
+- Fix viewer defaults when they are ignored or overwritten.
+- Run a security audit before expanding the feature set.
 
 ## Settings
 
@@ -21,6 +28,23 @@ package.
 - `pdf-preview.default.sidebar`
 - `pdf-preview.default.scrollMode`
 - `pdf-preview.default.spreadMode`
+
+## Install From Release
+
+Until the VS Marketplace publisher is configured, install the VSIX from the
+GitHub release:
+
+```bash
+code --install-extension pdf-preview-next-1.2.3.vsix --force
+```
+
+To make VS Code use this viewer for PDFs:
+
+```json
+"workbench.editorAssociations": {
+  "*.pdf": "pdf-preview-next.preview"
+}
+```
 
 ![screenshot](https://user-images.githubusercontent.com/3643499/84454816-98fcd600-ac96-11ea-822c-3ae1e1599a13.gif)
 

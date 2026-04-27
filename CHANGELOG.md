@@ -7,6 +7,7 @@
   PDF.js sidebar history does not override the configured default.
 - Replace the inherited icon with a new `PDF Preview Next` icon.
 - Keep VS Code type definitions out of the runtime package.
+- Document the project direction: simple, lightweight, robust, and fast.
 
 ## 1.2.2 (2022/12/23)
 
