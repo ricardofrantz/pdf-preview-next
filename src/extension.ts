@@ -12,8 +12,8 @@ export function activate(context: vscode.ExtensionContext): void {
           enableFindWidget: false, // default
           retainContextWhenHidden: true,
         },
-      }
-    )
+      },
+    ),
   );
 }
 

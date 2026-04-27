@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import * as vscode from 'vscode';
 import { Disposable } from './disposable';
 
@@ -11,6 +12,23 @@ function escapeAttribute(value: string | vscode.Uri): string {
     .replace(/>/g, '&gt;');
 }
 
+function createNonce(): string {
+  return crypto.randomBytes(16).toString('base64');
+}
+
+type WebviewMessage = {
+  readonly type: 'reopen-as-text';
+};
+
+function isWebviewMessage(message: unknown): message is WebviewMessage {
+  if (!message || typeof message !== 'object') {
+    return false;
+  }
+
+  const { type } = message as { type?: unknown };
+  return type === 'reopen-as-text';
+}
+
 type PreviewState = 'Disposed' | 'Visible' | 'Active';
 
 export class PdfPreview extends Disposable {
@@ -19,62 +37,64 @@ export class PdfPreview extends Disposable {
   constructor(
     private readonly extensionRoot: vscode.Uri,
     private readonly resource: vscode.Uri,
-    private readonly webviewEditor: vscode.WebviewPanel
+    private readonly webviewEditor: vscode.WebviewPanel,
   ) {
     super();
-    const resourceRoot = resource.with({
-      path: resource.path.replace(/\/[^/]+?\.\w+$/, '/'),
-    });
+    const documentRoot = resource.with({ query: '', fragment: '' });
 
     webviewEditor.webview.options = {
       enableScripts: true,
-      localResourceRoots: [resourceRoot, extensionRoot],
+      localResourceRoots: [extensionRoot, documentRoot],
     };
 
     this._register(
-      webviewEditor.webview.onDidReceiveMessage((message) => {
+      webviewEditor.webview.onDidReceiveMessage((message: unknown) => {
+        if (!isWebviewMessage(message)) {
+          return;
+        }
+
         switch (message.type) {
           case 'reopen-as-text': {
             vscode.commands.executeCommand(
               'vscode.openWith',
               resource,
               'default',
-              webviewEditor.viewColumn
+              webviewEditor.viewColumn,
             );
             break;
           }
         }
-      })
+      }),
     );
 
     this._register(
       webviewEditor.onDidChangeViewState(() => {
         this.update();
-      })
+      }),
     );
 
     this._register(
       webviewEditor.onDidDispose(() => {
         this._previewState = 'Disposed';
-      })
+      }),
     );
 
     const watcher = this._register(
-      vscode.workspace.createFileSystemWatcher(resource.fsPath)
+      vscode.workspace.createFileSystemWatcher(resource.fsPath),
     );
     this._register(
       watcher.onDidChange((e) => {
         if (e.toString() === this.resource.toString()) {
           this.reload();
         }
-      })
+      }),
     );
     this._register(
       watcher.onDidDelete((e) => {
         if (e.toString() === this.resource.toString()) {
           this.webviewEditor.dispose();
         }
-      })
+      }),
     );
 
     this.webviewEditor.webview.html = this.getWebviewContents();
@@ -103,15 +123,21 @@ export class PdfPreview extends Disposable {
     const webview = this.webviewEditor.webview;
     const docPath = webview.asWebviewUri(this.resource);
     const cspSource = webview.cspSource;
+    const nonce = createNonce();
     const resolveAsUri = (...p: string[]): vscode.Uri => {
       return webview.asWebviewUri(
-        vscode.Uri.joinPath(this.extensionRoot, ...p)
+        vscode.Uri.joinPath(this.extensionRoot, ...p),
       );
     };
 
     const config = vscode.workspace.getConfiguration('pdf-preview');
     const settings = {
       cMapUrl: resolveAsUri('lib', 'web', 'cmaps/').toString(),
+      standardFontDataUrl: resolveAsUri(
+        'lib',
+        'web',
+        'standard_fonts/',
+      ).toString(),
       path: docPath.toString(),
       defaults: {
         cursor: config.get('default.cursor') as string,
@@ -121,6 +147,15 @@ export class PdfPreview extends Disposable {
         spreadMode: config.get('default.spreadMode') as string,
       },
     };
+    const csp = [
+      "default-src 'none'",
+      `connect-src ${cspSource}`,
+      `font-src ${cspSource}`,
+      `img-src blob: data: ${cspSource}`,
+      `script-src 'nonce-${nonce}' ${cspSource}`,
+      `style-src 'unsafe-inline' ${cspSource}`,
+      `worker-src ${cspSource} blob:`,
+    ].join('; ');
 
     const head = `<!DOCTYPE html>
 <html dir="ltr" mozdisallowselectionprint>
@@ -129,23 +164,35 @@ export class PdfPreview extends Disposable {
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="google" content="notranslate">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src ${cspSource}; script-src 'unsafe-inline' ${cspSource}; style-src 'unsafe-inline' ${cspSource}; img-src blob: data: ${cspSource};">
+<meta http-equiv="Content-Security-Policy" content="${csp}">
 <meta id="pdf-preview-config" data-config="${escapeAttribute(
-      JSON.stringify(settings)
+      JSON.stringify(settings),
     )}">
 <title>PDF.js viewer</title>
 <link rel="resource" type="application/l10n" href="${resolveAsUri(
       'lib',
       'web',
       'locale',
-      'locale.properties'
+      'locale.properties',
     )}">
 <link rel="stylesheet" href="${resolveAsUri('lib', 'web', 'viewer.css')}">
 <link rel="stylesheet" href="${resolveAsUri('lib', 'pdf.css')}">
-<script src="${resolveAsUri('lib', 'build', 'pdf.js')}"></script>
-<script src="${resolveAsUri('lib', 'build', 'pdf.worker.js')}"></script>
-<script src="${resolveAsUri('lib', 'web', 'viewer.js')}"></script>
-<script src="${resolveAsUri('lib', 'main.js')}"></script>
+<script nonce="${nonce}" src="${resolveAsUri(
+      'lib',
+      'build',
+      'pdf.js',
+    )}"></script>
+<script nonce="${nonce}" src="${resolveAsUri(
+      'lib',
+      'build',
+      'pdf.worker.js',
+    )}"></script>
+<script nonce="${nonce}" src="${resolveAsUri(
+      'lib',
+      'web',
+      'viewer.js',
+    )}"></script>
+<script nonce="${nonce}" src="${resolveAsUri('lib', 'main.js')}"></script>
 </head>`;
 
     const body = `<body tabindex="1">

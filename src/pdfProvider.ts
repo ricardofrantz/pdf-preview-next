@@ -15,12 +15,12 @@ export class PdfCustomProvider implements vscode.CustomReadonlyEditorProvider {
 
   public async resolveCustomEditor(
     document: vscode.CustomDocument,
-    webviewEditor: vscode.WebviewPanel
+    webviewEditor: vscode.WebviewPanel,
   ): Promise<void> {
     const preview = new PdfPreview(
       this.extensionRoot,
       document.uri,
-      webviewEditor
+      webviewEditor,
     );
     this._previews.add(preview);
     this.setActivePreview(preview);

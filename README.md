@@ -21,6 +21,14 @@ will grow through small, practical improvements.
 - Fix viewer defaults when they are ignored or overwritten.
 - Run a security audit before expanding the feature set.
 
+## Security
+
+This repository has been security-audited by **Claude Opus 4.7** (April 2026).
+Phase 1 hardening has landed: nonce-based webview scripts, scoped resource
+roots, typed webview messages, and PDF.js eval disabled while the PDF.js 5
+migration is prepared. See [SECURITY.md](./SECURITY.md) and
+[PLAN.md](./PLAN.md).
+
 ## Settings
 
 - `pdf-preview.default.cursor`

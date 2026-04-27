@@ -11,6 +11,12 @@
 - Add defensive support for PDF URL hash destinations.
 - Keep PDF annotation popup text readable.
 - Exclude PDF.js source maps and debugger files from packaged VSIX builds.
+- Harden the webview CSP with nonce-based scripts and an explicit worker
+  policy.
+- Scope webview local resources to the extension and opened PDF.
+- Disable PDF.js eval support while the PDF.js 5 migration is prepared.
+- Modernize the TypeScript, ESLint, Prettier, VS Code test, and VSIX packaging
+  toolchain.
 
 ## 1.2.3 (2026/04/27)
 
