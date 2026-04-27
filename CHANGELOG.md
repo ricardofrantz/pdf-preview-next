@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 1.4.4 (2026/04/27)
+
+- Load the PDF.js core module before dynamically importing the PDF.js viewer
+  module so `globalThis.pdfjsLib` exists before PDF.js 5 evaluates
+  `pdf_viewer.mjs`.
+- Add an early webview bootstrap error handler that reports startup failures in
+  the preview instead of leaving a blank panel.
+- Rename the marketplace-facing extension display name to `vscode-pdf Next` and
+  describe it as a modern successor to the classic `vscode-pdf` extension.
+
 ## 1.4.3 (2026/04/27)
 
 - Restore `style-src 'unsafe-inline'` in the webview CSP because PDF.js 5 writes

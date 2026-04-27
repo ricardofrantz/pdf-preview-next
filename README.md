@@ -1,10 +1,11 @@
-# PDF Preview Next
+# vscode-pdf Next
 
-Simple, lightweight PDF preview for VS Code.
+Modern, lightweight PDF viewer for VS Code.
 
-PDF Preview Next is Ricardo's improved fork of `tomoki1207/vscode-pdfviewer`.
-The goal is a small extension that opens PDFs quickly, keeps the viewer behavior
-predictable, and avoids unnecessary features.
+`vscode-pdf Next` is Ricardo's modern, security-hardened successor to the
+classic `tomoki1207.vscode-pdf` VS Code PDF preview extension. The goal is a
+small extension that opens PDFs quickly, keeps viewer behavior predictable, and
+avoids unnecessary features.
 
 ## Why this fork exists
 
@@ -44,10 +45,10 @@ execution disabled.
 
 ## Commands And Controls
 
-- `PDF Preview Next: Open Preview` opens a PDF with this viewer.
-- `PDF Preview Next: Open Source` opens the active PDF preview as raw source.
-- `PDF Preview Next: Refresh Preview` refreshes the active PDF preview.
-- `PDF Preview Next: Print` prints the active PDF preview.
+- `vscode-pdf Next: Open Preview` opens a PDF with this viewer.
+- `vscode-pdf Next: Open Source` opens the active PDF preview as raw source.
+- `vscode-pdf Next: Refresh Preview` refreshes the active PDF preview.
+- `vscode-pdf Next: Print` prints the active PDF preview.
 - The toolbar `Source` button opens the raw PDF with VS Code's default editor.
 - The toolbar `Outline` button shows PDF bookmarks when the document provides
   an outline.
@@ -75,7 +76,7 @@ Install the VSIX from the GitHub release, or from the VS Code Marketplace once
 the publisher token is configured:
 
 ```bash
-code --install-extension pdf-preview-next-1.4.3.vsix --force
+code --install-extension pdf-preview-next-1.4.4.vsix --force
 ```
 
 To make VS Code use this viewer for PDFs:

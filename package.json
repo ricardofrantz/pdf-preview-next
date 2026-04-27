@@ -1,8 +1,8 @@
 {
   "name": "pdf-preview-next",
-  "displayName": "PDF Preview Next",
-  "description": "A lightweight PDF preview extension for VS Code with modern PDF.js, reliable refresh, and secure webviews.",
-  "version": "1.4.3",
+  "displayName": "vscode-pdf Next",
+  "description": "Modern successor to vscode-pdf: fast, secure PDF viewing in VS Code with PDF.js 5, live reload, search, outline, dark modes, and reliable preview state.",
+  "version": "1.4.4",
   "publisher": "ricardofrantz",
   "engines": {
     "vscode": "^1.95.0",
@@ -13,6 +13,7 @@
   ],
   "keywords": [
     "pdf",
+    "vscode-pdf",
     "viewer",
     "preview",
     "pdfjs",
@@ -22,10 +23,10 @@
   "icon": "icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ricardofrantz/pdf-preview-next.git"
+    "url": "https://github.com/ricardofrantz/vscode-pdf-next.git"
   },
   "bugs": {
-    "url": "https://github.com/ricardofrantz/pdf-preview-next/issues"
+    "url": "https://github.com/ricardofrantz/vscode-pdf-next/issues"
   },
   "activationEvents": [
     "onCustomEditor:pdf-preview-next.preview",
@@ -44,7 +45,7 @@
     "customEditors": [
       {
         "viewType": "pdf-preview-next.preview",
-        "displayName": "PDF Preview Next",
+        "displayName": "vscode-pdf Next",
         "selector": [
           {
             "filenamePattern": "*.pdf"
@@ -55,19 +56,19 @@
     "commands": [
       {
         "command": "pdf-preview.openPreview",
-        "title": "PDF Preview Next: Open Preview"
+        "title": "vscode-pdf Next: Open Preview"
       },
       {
         "command": "pdf-preview.openSource",
-        "title": "PDF Preview Next: Open Source"
+        "title": "vscode-pdf Next: Open Source"
       },
       {
         "command": "pdf-preview.refreshPreview",
-        "title": "PDF Preview Next: Refresh Preview"
+        "title": "vscode-pdf Next: Refresh Preview"
       },
       {
         "command": "pdf-preview.print",
-        "title": "PDF Preview Next: Print"
+        "title": "vscode-pdf Next: Print"
       }
     ],
     "configuration": {

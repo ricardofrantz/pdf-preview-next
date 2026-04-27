@@ -355,6 +355,39 @@ export class PdfPreview extends Disposable {
 <title>PDF Preview Next</title>
 <link rel="stylesheet" href="${resolve(...pdfjsDir, 'web', 'pdf_viewer.css')}">
 <link rel="stylesheet" href="${resolve('lib', 'pdf.css')}">
+<script nonce="${nonce}">
+(() => {
+  let startupError = '';
+  const applyStartupError = () => {
+    if (!startupError) {
+      return;
+    }
+    const status = document.getElementById('status');
+    if (!status) {
+      return;
+    }
+    status.textContent = startupError;
+    status.title = startupError;
+    status.classList.add('is-visible');
+  };
+  const messageFromReason = (reason) =>
+    reason && typeof reason === 'object' && 'message' in reason
+      ? reason.message
+      : String(reason);
+  const showStartupError = (reason) => {
+    startupError = 'Could not start PDF viewer: ' + messageFromReason(reason);
+    applyStartupError();
+    console.error('PDF Preview: startup error', reason);
+  };
+  window.addEventListener('error', (event) => {
+    showStartupError(event.error || event.message);
+  });
+  window.addEventListener('unhandledrejection', (event) => {
+    showStartupError(event.reason);
+  });
+  window.addEventListener('DOMContentLoaded', applyStartupError, { once: true });
+})();
+</script>
 <script nonce="${nonce}" type="module" src="${resolve('lib', 'main.mjs')}"></script>
 </head>`;
 

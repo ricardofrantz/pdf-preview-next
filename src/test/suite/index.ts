@@ -7,6 +7,7 @@ export async function run(): Promise<void> {
     ({ packageJSON }) => packageJSON.name === 'pdf-preview-next',
   );
   assert.ok(extension, 'PDF Preview Next extension should be registered.');
+  assert.strictEqual(extension.packageJSON.displayName, 'vscode-pdf Next');
 
   const sidebarDefault = vscode.workspace
     .getConfiguration('pdf-preview')
@@ -45,6 +46,29 @@ export async function run(): Promise<void> {
   assert.match(webviewSourceText, /script-src 'nonce-\$\{nonce\}'/);
   assert.doesNotMatch(webviewSourceText, /script-src[^\n]+unsafe-inline/);
   assert.doesNotMatch(webviewSourceText, /unsafe-eval|wasm-unsafe-eval/);
+  assert.match(webviewSourceText, /Could not start PDF viewer:/);
+  assert.match(webviewSourceText, /addEventListener\('unhandledrejection'/);
+
+  const viewerScript = await vscode.workspace.fs.readFile(
+    vscode.Uri.joinPath(extension.extensionUri, 'lib', 'main.mjs'),
+  );
+  const viewerScriptText = Buffer.from(viewerScript).toString('utf8');
+  const pdfCoreImportIndex = viewerScriptText.indexOf(
+    "import * as pdfjsLib from './pdfjs/build/pdf.min.mjs';",
+  );
+  const viewerImportIndex = viewerScriptText.indexOf(
+    "await import('./pdfjs/web/pdf_viewer.mjs')",
+  );
+  assert.ok(pdfCoreImportIndex >= 0, 'PDF.js core must load first.');
+  assert.ok(
+    viewerImportIndex > pdfCoreImportIndex,
+    'PDF.js viewer must load after PDF.js core.',
+  );
+  assert.match(viewerScriptText, /globalThis\.pdfjsLib = pdfjsLib/);
+  assert.doesNotMatch(
+    viewerScriptText,
+    /from '.\/pdfjs\/web\/pdf_viewer\.mjs'/,
+  );
 
   return Promise.resolve();
 }
