@@ -1,9 +1,9 @@
 {
-  "name": "pdf",
-  "displayName": "vscode-pdf",
-  "description": "Display pdf file in VSCode.",
-  "version": "1.2.2",
-  "publisher": "tomoki1207",
+  "name": "pdf-preview-next",
+  "displayName": "PDF Preview Next",
+  "description": "Ricardo's improved PDF preview extension for VS Code.",
+  "version": "1.2.3",
+  "publisher": "ricardofrantz",
   "engines": {
     "vscode": "^1.46.0"
   },
@@ -14,16 +14,16 @@
     "pdf",
     "viewer"
   ],
-  "icon": "vscode-pdf.png",
+  "icon": "icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tomoki1207/vscode-pdfviewer.git"
+    "url": "https://github.com/ricardofrantz/vscode-pdfviewer.git"
   },
   "bugs": {
-    "url": "https://github.com/tomoki1207/vscode-pdfviewer/issues"
+    "url": "https://github.com/ricardofrantz/vscode-pdfviewer/issues"
   },
   "activationEvents": [
-    "onCustomEditor:pdf.preview"
+    "onCustomEditor:pdf-preview-next.preview"
   ],
   "main": "./out/src/extension",
   "contributes": {
@@ -34,8 +34,8 @@
     },
     "customEditors": [
       {
-        "viewType": "pdf.preview",
-        "displayName": "Pdf Preview",
+        "viewType": "pdf-preview-next.preview",
+        "displayName": "PDF Preview Next",
         "selector": [
           {
             "filenamePattern": "*.pdf"
@@ -99,12 +99,10 @@
     "lint": "eslint -c .eslintrc.json --ext .ts ./src",
     "package": "vsce package"
   },
-  "dependencies": {
-    "@types/vscode": "^1.46.0"
-  },
   "devDependencies": {
     "@types/mocha": "^10.0.1",
     "@types/node": "^12.12.21",
+    "@types/vscode": "^1.46.0",
     "@typescript-eslint/eslint-plugin": "^2.28.0",
     "@typescript-eslint/parser": "^2.28.0",
     "eslint": "^6.8.0",

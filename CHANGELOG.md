@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.3 (2026/04/27)
+
+- Publish improved fork under the `pdf-preview-next` identity.
+- Respect `pdf-preview.default.sidebar` during PDF.js startup, so persisted
+  PDF.js sidebar history does not override the configured default.
+- Replace the inherited icon with a new `PDF Preview Next` icon.
+- Keep VS Code type definitions out of the runtime package.
+
 ## 1.2.2 (2022/12/23)
 
 - Fix about rendering Unicode characters

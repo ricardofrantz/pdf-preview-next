@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">PDF Preview Next icon</title>
+  <desc id="desc">A folded PDF page with next chevrons on a dark rounded square.</desc>
+  <defs>
+    <linearGradient id="bg" x1="18" y1="12" x2="111" y2="118" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#172033"/>
+      <stop offset="1" stop-color="#24364c"/>
+    </linearGradient>
+    <linearGradient id="page" x1="36" y1="22" x2="88" y2="106" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff7ed"/>
+      <stop offset="1" stop-color="#e8eef7"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#07111f" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect width="128" height="128" rx="24" fill="url(#bg)"/>
+  <path d="M33 18h43l25 25v67H33z" fill="url(#page)" filter="url(#shadow)"/>
+  <path d="M76 18v25h25z" fill="#cbd7e6"/>
+  <path d="M76 18v25h25" fill="none" stroke="#93a4b8" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M33 78h68v24H33z" fill="#d3262f"/>
+  <path d="M46 59h34" stroke="#7d8fa4" stroke-width="5" stroke-linecap="round"/>
+  <path d="M46 45h21" stroke="#9aaabc" stroke-width="5" stroke-linecap="round"/>
+  <text x="43" y="96" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" letter-spacing="0">PDF</text>
+  <path d="M83 82l8 8-8 8" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M94 82l8 8-8 8" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="96" cy="27" r="8" fill="#36c7b7"/>
+</svg>
