@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Add commands for opening a PDF preview and reopening the active preview as raw
+  PDF source.
+- Add an outline sidebar for PDFs that provide bookmarks, wired to the existing
+  `pdf-preview.default.sidebar` setting.
+- Persist per-PDF page, zoom, and scroll state in workspace state and restore it
+  on reopen unless an explicit URL hash is used.
+- Keep previews open across temporary PDF delete/recreate cycles by default;
+  `pdf-preview.reload.closeOnDelete` restores the old close-on-delete behavior.
+- Add finite appearance settings for dark/inverted viewing and page spacing.
+- Add lightweight in-viewer keyboard navigation shortcuts.
+- Document which deprecated upstream issues are now covered and which editor/API
+  requests remain out of scope.
+
 ## 1.4.0 (2026/04/27)
 
 - Upgrade the vendored PDF.js runtime to `pdfjs-dist@5.6.205`.

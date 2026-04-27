@@ -4,7 +4,12 @@ import { PdfPreview } from './pdfPreview';
 export class PdfCustomProvider implements vscode.CustomReadonlyEditorProvider {
   public static readonly viewType = 'pdf-preview-next.preview';
 
-  constructor(private readonly extensionRoot: vscode.Uri) {}
+  private activePreview: PdfPreview | undefined;
+
+  constructor(
+    private readonly extensionRoot: vscode.Uri,
+    private readonly workspaceState: vscode.Memento,
+  ) {}
 
   public openCustomDocument(uri: vscode.Uri): vscode.CustomDocument {
     return { uri, dispose: (): void => {} };
@@ -18,7 +23,34 @@ export class PdfCustomProvider implements vscode.CustomReadonlyEditorProvider {
       this.extensionRoot,
       document.uri,
       webviewEditor,
+      this.workspaceState,
     );
-    webviewEditor.onDidDispose(() => preview.dispose());
+    const updateActivePreview = (): void => {
+      if (webviewEditor.active) {
+        this.activePreview = preview;
+      }
+    };
+
+    updateActivePreview();
+    const viewStateSubscription =
+      webviewEditor.onDidChangeViewState(updateActivePreview);
+    webviewEditor.onDidDispose(() => {
+      viewStateSubscription.dispose();
+      if (this.activePreview === preview) {
+        this.activePreview = undefined;
+      }
+      preview.dispose();
+    });
+  }
+
+  public async openSourceForActivePreview(): Promise<void> {
+    if (!this.activePreview) {
+      await vscode.window.showInformationMessage(
+        'Open a PDF Preview Next tab first.',
+      );
+      return;
+    }
+
+    await this.activePreview.openSource();
   }
 }

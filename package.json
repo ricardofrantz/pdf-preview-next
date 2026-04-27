@@ -24,7 +24,9 @@
     "url": "https://github.com/ricardofrantz/pdf-preview-next/issues"
   },
   "activationEvents": [
-    "onCustomEditor:pdf-preview-next.preview"
+    "onCustomEditor:pdf-preview-next.preview",
+    "onCommand:pdf-preview.openPreview",
+    "onCommand:pdf-preview.openSource"
   ],
   "main": "./out/src/extension",
   "contributes": {
@@ -42,6 +44,16 @@
             "filenamePattern": "*.pdf"
           }
         ]
+      }
+    ],
+    "commands": [
+      {
+        "command": "pdf-preview.openPreview",
+        "title": "PDF Preview Next: Open Preview"
+      },
+      {
+        "command": "pdf-preview.openSource",
+        "title": "PDF Preview Next: Open Source"
       }
     ],
     "configuration": {
@@ -64,7 +76,7 @@
           "pattern": "^(\\d+(?:\\.\\d+)?|auto|page-actual|page-fit|page-width)$"
         },
         "pdf-preview.default.sidebar": {
-          "markdownDescription": "Legacy compatibility setting. The PDF.js 5 viewer shell does not currently show a sidebar.",
+          "markdownDescription": "Open the document outline sidebar by default when the PDF has an outline.",
           "type": "boolean",
           "default": false
         },
@@ -86,6 +98,32 @@
             "none",
             "odd",
             "even"
+          ]
+        },
+        "pdf-preview.reload.closeOnDelete": {
+          "markdownDescription": "Close the preview when the opened PDF is deleted. Disable this for TeX-style build workflows that temporarily delete and recreate the PDF.",
+          "type": "boolean",
+          "default": false
+        },
+        "pdf-preview.appearance.theme": {
+          "markdownDescription": "Preview appearance. `auto` follows VS Code colors, `dark` darkens chrome, and `inverted` also inverts rendered PDF pages.",
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "light",
+            "dark",
+            "inverted"
+          ]
+        },
+        "pdf-preview.appearance.pageGap": {
+          "markdownDescription": "Spacing between rendered PDF pages.",
+          "type": "string",
+          "default": "normal",
+          "enum": [
+            "compact",
+            "normal",
+            "wide"
           ]
         }
       }

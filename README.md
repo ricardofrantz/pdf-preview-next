@@ -20,6 +20,8 @@ will grow through small, practical improvements.
 - Prefer stable PDF.js behavior over one-off patches.
 - Fix viewer defaults when they are ignored or overwritten.
 - Run a security audit before expanding the feature set.
+- Close practical gaps from the deprecated upstream tracker while keeping PDF
+  editing and broad extension APIs out of the previewer's core scope.
 
 ## Security
 
@@ -32,10 +34,31 @@ execution disabled.
 
 - `pdf-preview.default.cursor`
 - `pdf-preview.default.scale`
-- `pdf-preview.default.sidebar` (legacy compatibility; the PDF.js 5 shell does
-  not currently show a sidebar)
+- `pdf-preview.default.sidebar`
 - `pdf-preview.default.scrollMode`
 - `pdf-preview.default.spreadMode`
+- `pdf-preview.reload.closeOnDelete`
+- `pdf-preview.appearance.theme`
+- `pdf-preview.appearance.pageGap`
+
+## Commands And Controls
+
+- `PDF Preview Next: Open Preview` opens a PDF with this viewer.
+- `PDF Preview Next: Open Source` opens the active PDF preview as raw source.
+- The toolbar `Source` button opens the raw PDF with VS Code's default editor.
+- The toolbar `Outline` button shows PDF bookmarks when the document provides
+  an outline.
+- Inside the viewer, `j/k/h/l` scroll, `n/p` or `./,` move pages, `g/G` jump to
+  first/last page, and `+/-` zoom.
+
+## Upstream Gaps
+
+The fork now covers the practical upstream requests for newer PDF.js, live
+reload, raw source access, outline/bookmark navigation, per-PDF view-state
+restore, temporary delete/recreate build workflows, appearance controls, and
+keyboard navigation. PDF editing, persistent annotations, delete-pages support,
+and a public cross-extension PDF.js API are intentionally deferred because they
+would turn this previewer into a PDF editor or platform surface.
 
 ## Install From Release
 

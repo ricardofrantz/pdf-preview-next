@@ -81,6 +81,17 @@ select {
   background: var(--vscode-editorGroupHeader-tabsBackground);
 }
 
+body.theme-light {
+  color: #1f2328;
+  background: #ffffff;
+}
+
+body.theme-dark,
+body.theme-inverted {
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+}
+
 .toolbar-group {
   display: inline-flex;
   align-items: center;
@@ -102,12 +113,96 @@ select {
   min-width: 54px;
 }
 
-#viewerContainer {
+#pdf-content {
   position: absolute;
   top: 42px;
   right: 0;
   bottom: 0;
   left: 0;
+  display: flex;
+  min-height: 0;
+}
+
+.outline-sidebar {
+  flex: 0 0 240px;
+  overflow: auto;
+  border-right: 1px solid var(--vscode-panel-border);
+  background: var(--vscode-sideBar-background, var(--vscode-editor-background));
+}
+
+.outline-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  color: var(--vscode-descriptionForeground);
+  background: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.outline-tree {
+  padding: 4px 0;
+}
+
+.outline-item {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 28px;
+  padding: 5px 8px 5px calc(8px + var(--outline-indent, 0px));
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  color: var(--vscode-sideBar-foreground, var(--vscode-foreground));
+  background: transparent;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.outline-item:hover:not(:disabled) {
+  background: var(--vscode-list-hoverBackground);
+}
+
+.outline-item:disabled {
+  opacity: 0.65;
+}
+
+.outline-depth-0 {
+  --outline-indent: 0px;
+}
+
+.outline-depth-1 {
+  --outline-indent: 12px;
+}
+
+.outline-depth-2 {
+  --outline-indent: 24px;
+}
+
+.outline-depth-3 {
+  --outline-indent: 36px;
+}
+
+.outline-depth-4 {
+  --outline-indent: 48px;
+}
+
+.outline-depth-5 {
+  --outline-indent: 60px;
+}
+
+.outline-depth-6 {
+  --outline-indent: 72px;
+}
+
+#viewerContainer {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: auto;
   background: var(--vscode-editor-background);
   outline: none;
@@ -126,6 +221,39 @@ select {
 
 .pdfViewer .page {
   --page-bg-color: #fff;
+}
+
+body.page-gap-compact {
+  --page-margin: 1px auto -8px;
+  --spreadHorizontalWrapped-margin-LR: -3.5px;
+}
+
+body.page-gap-normal {
+  --page-margin: 8px auto 0;
+  --spreadHorizontalWrapped-margin-LR: 4px;
+}
+
+body.page-gap-wide {
+  --page-margin: 18px auto 10px;
+  --spreadHorizontalWrapped-margin-LR: 12px;
+}
+
+body.theme-light #viewerContainer {
+  background: #f6f8fa;
+}
+
+body.theme-light #pdf-toolbar,
+body.theme-light .outline-sidebar {
+  background: #ffffff;
+}
+
+body.theme-dark #viewerContainer,
+body.theme-inverted #viewerContainer {
+  background: #1f1f1f;
+}
+
+body.theme-inverted .pdfViewer .page {
+  filter: invert(1) hue-rotate(180deg);
 }
 
 .textLayer {

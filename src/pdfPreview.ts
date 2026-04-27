@@ -7,17 +7,85 @@ function createNonce(): string {
   return crypto.randomBytes(16).toString('base64');
 }
 
-function isReopenAsTextMessage(message: unknown): boolean {
-  if (!message || typeof message !== 'object') {
+interface PersistedViewState {
+  pageNumber: number;
+  scaleValue: string;
+  scrollLeft: number;
+  scrollTop: number;
+}
+
+type WebviewMessage =
+  | { type: 'open-source' }
+  | { type: 'view-state'; state: PersistedViewState };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function hasExactKeys(
+  value: Record<string, unknown>,
+  expectedKeys: string[],
+): boolean {
+  const keys = Object.keys(value);
+  return (
+    keys.length === expectedKeys.length &&
+    expectedKeys.every((key) => keys.includes(key))
+  );
+}
+
+function isPersistedViewState(value: unknown): value is PersistedViewState {
+  if (
+    !isRecord(value) ||
+    !hasExactKeys(value, [
+      'pageNumber',
+      'scaleValue',
+      'scrollLeft',
+      'scrollTop',
+    ])
+  ) {
     return false;
   }
 
-  const keys = Object.keys(message);
   return (
-    keys.length === 1 &&
-    keys[0] === 'type' &&
-    (message as { type?: unknown }).type === 'reopen-as-text'
+    typeof value.pageNumber === 'number' &&
+    Number.isInteger(value.pageNumber) &&
+    value.pageNumber > 0 &&
+    typeof value.scaleValue === 'string' &&
+    typeof value.scrollLeft === 'number' &&
+    Number.isFinite(value.scrollLeft) &&
+    typeof value.scrollTop === 'number' &&
+    Number.isFinite(value.scrollTop)
   );
+}
+
+function getWebviewMessage(message: unknown): WebviewMessage | undefined {
+  if (!isRecord(message)) {
+    return undefined;
+  }
+
+  if (hasExactKeys(message, ['type']) && message.type === 'open-source') {
+    return { type: 'open-source' };
+  }
+
+  if (
+    hasExactKeys(message, ['type', 'state']) &&
+    message.type === 'view-state' &&
+    isPersistedViewState(message.state)
+  ) {
+    return { type: 'view-state', state: message.state };
+  }
+
+  return undefined;
+}
+
+function viewStateKey(resource: vscode.Uri): string {
+  return `pdf-preview-next.view-state:${resource.with({ fragment: '' }).toString()}`;
+}
+
+function persistedViewStateOrUndefined(
+  value: unknown,
+): PersistedViewState | undefined {
+  return isPersistedViewState(value) ? value : undefined;
 }
 
 const PDF_VIEWER_BODY = `<body>
@@ -55,14 +123,21 @@ const PDF_VIEWER_BODY = `<body>
       </div>
       <div class="toolbar-group toolbar-spacer"></div>
       <div class="toolbar-group">
+        <button id="outlineToggle" type="button" title="Toggle document outline" disabled>Outline</button>
         <button id="reload" type="button" title="Reload PDF">Reload</button>
-        <button id="openText" type="button" title="Open with VS Code's default text editor">Text</button>
+        <button id="openSource" type="button" title="Open raw PDF source with VS Code's default editor">Source</button>
       </div>
       <span id="status" role="status"></span>
     </header>
-    <main id="viewerContainer" tabindex="0">
-      <div id="viewer" class="pdfViewer"></div>
-    </main>
+    <div id="pdf-content">
+      <aside id="outlineSidebar" class="outline-sidebar hidden" aria-label="Document outline">
+        <div class="outline-header">Outline</div>
+        <div id="outlineTree" class="outline-tree"></div>
+      </aside>
+      <main id="viewerContainer" tabindex="0">
+        <div id="viewer" class="pdfViewer"></div>
+      </main>
+    </div>
     <div id="passwordOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="passwordTitle">
       <form id="passwordForm" class="password-panel">
         <h1 id="passwordTitle">Password required</h1>
@@ -82,9 +157,12 @@ export class PdfPreview extends Disposable {
     private readonly extensionRoot: vscode.Uri,
     private readonly resource: vscode.Uri,
     private readonly webviewEditor: vscode.WebviewPanel,
+    private readonly workspaceState: vscode.Memento,
   ) {
     super();
     const documentRoot = vscode.Uri.joinPath(resource, '..');
+    const config = vscode.workspace.getConfiguration('pdf-preview');
+    const closeOnDelete = config.get<boolean>('reload.closeOnDelete', false);
 
     webviewEditor.webview.options = {
       enableScripts: true,
@@ -93,15 +171,19 @@ export class PdfPreview extends Disposable {
 
     this._register(
       webviewEditor.webview.onDidReceiveMessage((message: unknown) => {
-        if (!isReopenAsTextMessage(message)) {
+        const parsedMessage = getWebviewMessage(message);
+        if (!parsedMessage) {
           return;
         }
-        vscode.commands.executeCommand(
-          'vscode.openWith',
-          resource,
-          'default',
-          webviewEditor.viewColumn,
-        );
+
+        if (parsedMessage.type === 'open-source') {
+          void this.openSource();
+        } else {
+          void this.workspaceState.update(
+            viewStateKey(this.resource),
+            parsedMessage.state,
+          );
+        }
       }),
     );
 
@@ -119,12 +201,33 @@ export class PdfPreview extends Disposable {
       }),
     );
     this._register(
+      watcher.onDidCreate(() => {
+        this.reload();
+      }),
+    );
+    this._register(
       watcher.onDidDelete(() => {
-        this.webviewEditor.dispose();
+        if (closeOnDelete) {
+          this.webviewEditor.dispose();
+          return;
+        }
+
+        void this.webviewEditor.webview.postMessage({ type: 'file-deleted' });
       }),
     );
 
     this.webviewEditor.webview.html = this.getWebviewContents();
+  }
+
+  public async openSource(
+    viewColumn: vscode.ViewColumn | undefined = this.webviewEditor.viewColumn,
+  ): Promise<void> {
+    await vscode.commands.executeCommand(
+      'vscode.openWith',
+      this.resource,
+      'default',
+      viewColumn,
+    );
   }
 
   private reload(): void {
@@ -153,6 +256,7 @@ export class PdfPreview extends Disposable {
       cMapUrl: resolveDir(...pdfjsDir, 'cmaps'),
       iccUrl: resolveDir(...pdfjsDir, 'iccs'),
       imageResourcesPath: resolveDir(...pdfjsDir, 'web', 'images'),
+      hash: this.resource.fragment,
       path: docPath.toString(),
       standardFontDataUrl: resolveDir(...pdfjsDir, 'standard_fonts'),
       wasmUrl: resolveDir(...pdfjsDir, 'wasm'),
@@ -164,6 +268,13 @@ export class PdfPreview extends Disposable {
         scrollMode: config.get<string>('default.scrollMode'),
         spreadMode: config.get<string>('default.spreadMode'),
       },
+      appearance: {
+        pageGap: config.get<string>('appearance.pageGap'),
+        theme: config.get<string>('appearance.theme'),
+      },
+      initialViewState: persistedViewStateOrUndefined(
+        this.workspaceState.get(viewStateKey(this.resource)),
+      ),
     };
 
     const csp = [
