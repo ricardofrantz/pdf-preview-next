@@ -24,16 +24,15 @@ will grow through small, practical improvements.
 ## Security
 
 This repository has been security-audited by **Claude Opus 4.7** (April 2026).
-Phase 1 hardening has landed: nonce-based webview scripts, scoped resource
-roots, typed webview messages, and PDF.js eval disabled while the PDF.js 5
-migration is prepared. See [SECURITY.md](./SECURITY.md) and
-[PLAN.md](./PLAN.md).
+The current runtime uses `pdfjs-dist@5.6.205` with nonce-based webview scripts,
+scoped resource roots, an explicit worker policy, and PDF.js eval disabled.
 
 ## Settings
 
 - `pdf-preview.default.cursor`
 - `pdf-preview.default.scale`
-- `pdf-preview.default.sidebar`
+- `pdf-preview.default.sidebar` (legacy compatibility; the PDF.js 5 shell does
+  not currently show a sidebar)
 - `pdf-preview.default.scrollMode`
 - `pdf-preview.default.spreadMode`
 
@@ -43,7 +42,7 @@ Until the VS Marketplace publisher is configured, install the VSIX from the
 GitHub release:
 
 ```bash
-code --install-extension pdf-preview-next-1.3.0.vsix --force
+code --install-extension pdf-preview-next-1.4.0.vsix --force
 ```
 
 To make VS Code use this viewer for PDFs:
@@ -60,19 +59,16 @@ To make VS Code use this viewer for PDFs:
 
 ### Upgrade PDF.js
 
-1. Download latest [Prebuilt(older browsers)](https://mozilla.github.io/pdf.js/getting_started/#download).
-1. Extract the ZIP file.
-1. Overwrite ./lib/* by extracted directories.
-   - If lib/web/viewer.html has changes, apply these changes to HTML template at pdfPreview.ts.
-1. To not use sample pdf.
-  - Remove sample pdf called `compressed.tracemonkey-pldi-09.pdf`.
-  - Remove code about using sample pdf from lib/web/viewer.js.
-    ```js
-    defaultUrl: {
-      value: "", // "compressed.tracemonkey-pldi-09.pdf"
-      kind: OptionKind.VIEWER
-    },
-    ```
+1. Update `tools/update_pdfjs.jsonc` with the target `pdfjs-dist` version and
+   npm integrity value.
+1. Run:
+
+   ```bash
+   npm run update:pdfjs
+   ```
+
+1. Verify with `npm run typecheck`, `npm run lint`, `npm test`, and
+   `npm run package`.
 
 ## Change log
 See [CHANGELOG.md](CHANGELOG.md).

@@ -1,0 +1,37 @@
+{
+  // Source package pinned for the PDF.js 5 migration.
+  "packageName": "pdfjs-dist",
+  "version": "5.6.205",
+  "integrity": "sha512-tlUj+2IDa7G1SbvBNN74UHRLJybZDWYom+k6p5KIZl7huBvsA4APi6mKL+zCxd3tLjN5hOOEE9Tv7VdzO88pfg==",
+
+  // Keep downloads/extraction inside the ignored workspace folder.
+  "workDirectory": ".work/pdfjs-dist-5.6.205",
+  "sourceDirectory": ".work/pdfjs-dist-5.6.205/package",
+
+  // Old PDF.js 3 layout plus the regenerated PDF.js 5 tree.
+  "remove": ["lib/pdfjs", "lib/build", "lib/web", "lib/LICENSE"],
+
+  // Runtime files copied into the VS Code extension package.
+  "copy": [
+    { "from": "LICENSE", "to": "lib/pdfjs/LICENSE" },
+    { "from": "build/pdf.min.mjs", "to": "lib/pdfjs/build/pdf.min.mjs" },
+    {
+      "from": "build/pdf.worker.min.mjs",
+      "to": "lib/pdfjs/build/pdf.worker.min.mjs",
+    },
+    {
+      "from": "build/pdf.sandbox.min.mjs",
+      "to": "lib/pdfjs/build/pdf.sandbox.min.mjs",
+    },
+    { "from": "web/pdf_viewer.mjs", "to": "lib/pdfjs/web/pdf_viewer.mjs" },
+    { "from": "web/pdf_viewer.css", "to": "lib/pdfjs/web/pdf_viewer.css" },
+    { "from": "web/images", "to": "lib/pdfjs/web/images" },
+    { "from": "cmaps", "to": "lib/pdfjs/cmaps" },
+    { "from": "standard_fonts", "to": "lib/pdfjs/standard_fonts" },
+    { "from": "wasm", "to": "lib/pdfjs/wasm" },
+    { "from": "iccs", "to": "lib/pdfjs/iccs" },
+  ],
+
+  // Small provenance file kept next to the vendored runtime.
+  "versionFile": "lib/PDFJS_VERSION",
+}

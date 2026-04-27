@@ -15,7 +15,7 @@ Do not include exploit details in public issues.
 |------------|----------------------|----------------------------------------------|---------------------------------|
 | 2026-04-27 | Claude Opus 4.7      | `src/`, CSP, vendored PDF.js, npm advisories | 1 critical, 1 high, 2 medium    |
 
-Findings are tracked in [PLAN.md](./PLAN.md) (Phase 1).
+The 2026-04-27 findings are remediated across `1.3.0` and `1.4.0`.
 
 ### 2026-04-27 — Claude Opus 4.7
 
@@ -32,24 +32,23 @@ the webview HTML construction and message channel.
 
 **Findings.**
 
-- **Critical** — Vendored PDF.js `3.1.81` is affected by **CVE-2024-4367**
+- **Critical** — Vendored PDF.js `3.1.81` was affected by **CVE-2024-4367**
   (arbitrary JavaScript execution via crafted PDF, fixed in 4.2.67).
-  Immediate mitigation landed by disabling PDF.js eval support; full remediation
-  is tracked in PLAN.md Phase 1 as the PDF.js 5 migration.
+  Remediated in `1.4.0` by migrating the vendored runtime to
+  `pdfjs-dist@5.6.205`; PDF.js eval support remains disabled.
 - **High** — Webview CSP used `script-src 'unsafe-inline'`, which
   defeats CSP's protection against script injection in the viewer.
-  Remediated with a per-load script nonce. Tracked in PLAN.md Phase 1.
+  Remediated in `1.3.0` with a per-load script nonce.
 - **Medium** — `localResourceRoots` needed tighter bounds. Remediated in
-  Phase 1 by limiting roots to the extension directory and the opened PDF's
+  `1.3.0` by limiting roots to the extension directory and the opened PDF's
   containing directory, which is the directory-style boundary VS Code webviews
   support for local resources.
 - **Medium** — CSP omitted `worker-src`; PDF.js spawns a Web Worker.
-  Remediated in Phase 1.
+  Remediated in `1.3.0`.
 
 **Verified clean.**
 
-- No shell-execution or dynamic code evaluation in repository-authored
-  code (only inside vendored `lib/build/pdf.js`).
+- No shell-execution or dynamic code evaluation in repository-authored code.
 - No unsafe HTML sinks in `src/`.
 - `npm audit --omit=dev` reports 0 vulnerabilities.
 - `npm audit --audit-level=high` reports 0 high or critical vulnerabilities;
@@ -58,6 +57,4 @@ the webview HTML construction and message channel.
 - No secrets, tokens, or API keys in source.
 - No GitHub Actions workflows present, so no workflow-injection surface.
 
-**Status.** Phase 1 webview hardening has landed on `main`. Rendering
-untrusted PDFs should still wait for the full PDF.js upgrade tracked in
-[PLAN.md](./PLAN.md).
+**Status.** Webview hardening and the PDF.js 5 runtime migration have landed.

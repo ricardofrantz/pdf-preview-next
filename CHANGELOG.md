@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## 1.4.0 (2026/04/27)
+
+- Upgrade the vendored PDF.js runtime to `pdfjs-dist@5.6.205`.
+- Replace the legacy global `PDFViewerApplication` integration with a small
+  ESM viewer shell owned by this extension.
+- Keep PDF.js eval disabled while allowing PDF.js's WASM image/font helpers
+  through the webview CSP.
+- Preserve live-reload behavior without patching PDF.js private viewer
+  internals.
+- Add built-in page navigation, zoom, find, password prompt, and hand-scroll
+  support for the new viewer shell.
+- Add `npm run update:pdfjs` with a pinned JSONC manifest and npm integrity
+  verification for future PDF.js upgrades.
+- Remove the old PDF.js 3 full viewer, locales, source maps, and debugger
+  artifacts from the vendored runtime.
+
 ## 1.3.0 (2026/04/27)
 
 - Harden webview configuration escaping for PDF paths containing HTML-sensitive
