@@ -1,4 +1,4 @@
-# v1.4.6 Plan — Loader Correctness And Render Regression Test
+# v1.4.6 Plan — Loader Correctness
 
 Status: `[~]` in progress
 
@@ -7,8 +7,9 @@ Status: `[~]` in progress
 Stop the "blank PDF panel" regression at the root cause and prevent it from
 shipping again. Every version from `1.4.0` to `1.4.5` has had at least one user
 report or local repro of an empty viewer, and each fix attempt addressed a
-different symptom. This release fixes the actual cause and adds the first
-regression test that exercises a full PDF load end-to-end.
+different symptom. This release fixes the load-order failure, the PDF.js 5
+viewer-container contract failure, and adds regression assertions for both
+startup assumptions.
 
 ## Why This Version Next
 
@@ -17,7 +18,7 @@ Static checks (`lint`, `typecheck`, `npm test`) all passed for `1.4.0` through
 adding features (`v1.5.0` dark pages, `v1.7.0` inter-PDF links, `v1.8.0`
 thumbnails) on top of a viewer that may not load at all in production.
 
-## Root Cause
+## Root Causes
 
 `lib/main.mjs` uses top-level `await import('./pdfjs/web/pdf_viewer.mjs')`,
 which makes the module asynchronous. The HTML parser fires `DOMContentLoaded`
@@ -27,23 +28,29 @@ which therefore attached *after* the event had already fired and never
 executed. The viewer reached "module imported" and stayed blank with `of 0`
 pages forever.
 
+After that race was fixed, the viewer began starting and exposed a second
+startup blocker: PDF.js 5.6.205 validates that both `container` and `viewer`
+passed to `new PDFViewer(...)` are `DIV` elements. The extension supplied a
+semantic `<main id="viewerContainer">`, so PDF.js threw
+`Invalid container and/or viewer option` before loading the PDF. The markup now
+uses `<div id="viewerContainer" role="main" tabindex="0">`.
+
 This was masked by:
 
 - Static tests only verifying source patterns, not real render.
-- The error banner being placed inside an overflow-hidden toolbar so any
-  fallback messages were clipped off-screen.
+- Startup errors being surfaced only through generic status text during normal
+  builds, making the failure mode easy to confuse with a PDF loading problem.
 - Multiple version bumps shipping different non-fixes for the same symptom.
 
 ## Scope
 
 - Replace the `DOMContentLoaded` registration with a `document.readyState` check
   so the app starts even if the event already fired.
-- Surface webview load progress and errors in a banner below the toolbar that
-  cannot be hidden by horizontal toolbar overflow.
-- Add `console.info` checkpoints at every load step so DevTools shows exactly
-  where any future regression stalls.
-- Add a runtime fixture PDF and an automated test that opens the custom editor,
-  waits for `pagesinit` (or equivalent), and asserts page count > 0.
+- Keep the PDF.js `container` and `viewer` constructor options backed by `DIV`
+  elements.
+- Remove temporary diagnostic banner/logging instrumentation before committing.
+- Add automated source-level assertions for the ready-state bootstrap path and
+  the PDF.js viewer-container element contract.
 - Add a manual install-and-open verification gate to the release process.
 
 ## Non-Goals
@@ -57,10 +64,8 @@ This was masked by:
 ## Likely Files
 
 - `lib/main.mjs`
-- `lib/pdf.css`
 - `src/pdfPreview.ts`
 - `src/test/suite/index.ts`
-- `src/test/fixtures/sample.pdf` (new, tiny one-page PDF)
 - `package.json`
 - `package-lock.json`
 - `CHANGELOG.md`
@@ -79,35 +84,19 @@ This was masked by:
        startApp();
      }
      ```
-   - Wrap `startApp` so any synchronous throw is logged and surfaced.
-3. Add an `errorBanner` element to the webview HTML in `src/pdfPreview.ts` and
-   matching CSS in `lib/pdf.css`. Banner must sit between toolbar and content,
-   not inside the overflow-scrollable toolbar.
-4. Add `console.info` checkpoints in `lib/main.mjs`:
-   - `main.mjs evaluating`
-   - `PDF.js core imported, exports=<n>`
-   - `viewer module imported`
-   - `loadDocument start, token=<n>`
-   - `fetching PDF from <url>`
-   - `fetch response <status>`
-   - `fetched bytes <n>`
-   - `getDocument resolved, numPages=<n>`
-   - `pagesinit fired`
-   - `load complete`
-5. Update the bootstrap script in `src/pdfPreview.ts` so unhandled errors and
-   rejections are written to the banner as well as the toolbar status.
-6. Add `src/test/fixtures/sample.pdf` (tiny single-page PDF). Keep file under
-   ~10 KB. Document its provenance in a sibling `README.md` next to the
-   fixture.
-7. Add `.vscodeignore` entries to keep the fixture out of the published VSIX.
-8. Add a runtime test in `src/test/suite/index.ts` that:
-   - Opens the fixture URI with the custom editor view type.
-   - Waits up to ~5 s for the webview to post `view-state` *or* a derived ready
-     signal.
-   - Fails if no signal arrives or if reported page count is `0`.
-9. Update `CHANGELOG.md` with a `1.4.6` entry describing the load-order fix and
-   the new render regression test.
-10. Update `README.md` install command to `pdf-preview-next-1.4.6.vsix`.
+3. Keep the bootstrap error handler in `src/pdfPreview.ts` writing startup
+   errors to the toolbar status without retaining temporary diagnostic banners.
+4. Change `viewerContainer` from `<main>` to `<div role="main">`, because PDF.js
+   5 rejects non-`DIV` container/viewer elements.
+5. Add assertions in `src/test/suite/index.ts` for:
+   - `document.readyState === 'loading'` fallback logic.
+   - `DOMContentLoaded` registration only on the loading path.
+   - `<div id="viewerContainer" role="main" tabindex="0">`.
+   - no `<main id="viewerContainer">` regression.
+6. Update `CHANGELOG.md` with a `1.4.6` entry describing the load-order fix,
+   the PDF.js `DIV` container requirement, and the cleanup of temporary
+   diagnostics.
+7. Update `README.md` install command to `pdf-preview-next-1.4.6.vsix`.
 
 ## Tests
 
@@ -128,9 +117,9 @@ This was masked by:
 ## Acceptance Criteria
 
 - Opening a normal PDF renders pages without manual intervention.
-- The error banner is empty on success and populated on any startup failure.
-- DevTools shows the full load checkpoint sequence ending in `load complete`.
-- Automated test fails if page count stays at zero.
+- No startup error appears in the toolbar status on success.
+- Automated tests fail if the ready-state startup path or `DIV` viewer-container
+  contract regresses.
 - No previously installed `1.4.x` cached extensions remain in
   `~/.vscode/extensions/` during verification.
 
@@ -138,15 +127,10 @@ This was masked by:
 
 - Module evaluation order in webviews can differ between VS Code Electron
   versions. The `document.readyState` fallback covers both ordering paths.
-- Test fixtures can bloat the VSIX if `.vscodeignore` is incomplete; the VSIX
-  scanner step catches this.
-- Some webview environments may not let runtime tests open custom editors
-  reliably; if so, fall back to a postMessage-based ready signal asserted from
-  the host extension.
+- PDF.js may add more constructor validation in future runtime upgrades; keep
+  markup assumptions covered by tests when changing the viewer shell.
 
 ## Deferred
 
-- Removing the diagnostic banner background colors and step-by-step
-  checkpoints once `1.4.6` has been verified for at least one minor cycle.
 - Adding a more comprehensive fixture matrix (password PDFs, PDFs with
   outlines, large PDFs, broken PDFs) — that work belongs in `v1.6.0`.

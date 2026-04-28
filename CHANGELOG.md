@@ -9,6 +9,9 @@
   panel blank.
 - Start the viewer immediately when the document is already ready, while still
   using the `DOMContentLoaded` listener for early-loading webviews.
+- Use a `div` for the PDF.js viewer container, matching the PDF.js 5
+  constructor contract and avoiding `Invalid container and/or viewer option`
+  startup failures.
 - Keep the local webview PDF data loading path from 1.4.5 and remove temporary
   diagnostic banner/logging instrumentation.
 

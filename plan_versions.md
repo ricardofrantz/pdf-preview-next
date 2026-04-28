@@ -11,9 +11,9 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 
 - Active plan: `plan_v1.4.6_loader_correctness.md`. The prior `1.4.x`
   releases all shipped a blank-PDF regression that static checks did not
-  catch. `v1.4.6` fixes the actual root cause (top-level `await` → late
-  `DOMContentLoaded` listener) and lands the first runtime render-regression
-  test.
+  catch. `v1.4.6` fixes the load-order root cause (top-level `await` → late
+  `DOMContentLoaded` listener) and the PDF.js 5 viewer-container contract that
+  surfaced after startup began running.
 - Do not start any later version until `v1.4.6` is shipped *and* manually
   verified by installing the produced VSIX and opening a real PDF.
 - Baseline strengths to preserve:
@@ -30,9 +30,10 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 1. [v1.4.6 Loader Correctness](plan_v1.4.6_loader_correctness.md)
    - Fix the `DOMContentLoaded` race that made every `1.4.x` ship a blank
      viewer.
-   - Add an always-visible error banner that is not hidden by toolbar
-     overflow.
-   - Add the first runtime render regression test (page count > 0).
+   - Keep `viewerContainer` as a `div`, because PDF.js 5 rejects non-`DIV`
+     container/viewer elements.
+   - Add regression assertions for the startup path and viewer-container
+     contract.
 
 2. [v1.5.0 Dark PDF Rendering](plan_v1.5.0_dark_pages.md)
    - Add `dark-pages` backed by PDF.js `pageColors`.
@@ -95,7 +96,7 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
   - Open at least one fixture PDF and confirm:
     - viewer shows a non-zero page count
     - scrolling, find, refresh, and source open work
-    - any error banner is empty on success
+    - no startup error appears in the toolbar status
 - Do not weaken CSP, message validation, resource roots, or PDF.js execution
   restrictions to gain feature parity.
 - Do not ship a version whose only verification is the static gate. Every

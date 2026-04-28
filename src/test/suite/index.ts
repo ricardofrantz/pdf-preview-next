@@ -48,6 +48,12 @@ export async function run(): Promise<void> {
   assert.doesNotMatch(webviewSourceText, /unsafe-eval|wasm-unsafe-eval/);
   assert.match(webviewSourceText, /Could not start PDF viewer:/);
   assert.match(webviewSourceText, /addEventListener\('unhandledrejection'/);
+  assert.match(
+    webviewSourceText,
+    /<div id="viewerContainer" role="main" tabindex="0">/,
+    'PDF.js 5 requires the viewer container option to be a DIV element.',
+  );
+  assert.doesNotMatch(webviewSourceText, /<main id="viewerContainer"/);
 
   const viewerScript = await vscode.workspace.fs.readFile(
     vscode.Uri.joinPath(extension.extensionUri, 'lib', 'main.mjs'),
