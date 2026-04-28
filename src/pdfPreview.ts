@@ -2,138 +2,19 @@ import * as crypto from 'crypto';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { Disposable } from './disposable';
+import {
+  parseViewerToHostMessage,
+  persistedViewStateOrUndefined,
+  viewStateKey,
+  type HostToViewerMessage,
+  type ViewerEvent,
+} from './webviewContract';
 
 function createNonce(): string {
   return crypto.randomBytes(16).toString('base64');
 }
 
-interface PersistedViewState {
-  pageNumber: number;
-  scaleValue: string;
-  scrollLeft: number;
-  scrollTop: number;
-  outlineVisible?: boolean;
-}
-
-export type ViewerEvent =
-  | {
-      type: 'viewer-ready';
-      resource: string;
-      pagesCount: number;
-      pageNumber: number;
-    }
-  | { type: 'viewer-error'; resource: string; message: string };
-
-type WebviewMessage =
-  | { type: 'open-external' }
-  | { type: 'open-source' }
-  | { type: 'view-state'; state: PersistedViewState }
-  | { type: 'viewer-ready'; pagesCount: number; pageNumber: number }
-  | { type: 'viewer-error'; message: string };
-
 const DEFAULT_RELOAD_DEBOUNCE_MS = 800;
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && typeof value === 'object' && !Array.isArray(value);
-}
-
-function hasExpectedKeys(
-  value: Record<string, unknown>,
-  requiredKeys: string[],
-  optionalKeys: string[] = [],
-): boolean {
-  const keys = Object.keys(value);
-  const allowedKeys = new Set([...requiredKeys, ...optionalKeys]);
-  return (
-    requiredKeys.every((key) => keys.includes(key)) &&
-    keys.every((key) => allowedKeys.has(key))
-  );
-}
-
-function isPersistedViewState(value: unknown): value is PersistedViewState {
-  if (
-    !isRecord(value) ||
-    !hasExpectedKeys(
-      value,
-      ['pageNumber', 'scaleValue', 'scrollLeft', 'scrollTop'],
-      ['outlineVisible'],
-    )
-  ) {
-    return false;
-  }
-
-  return (
-    typeof value.pageNumber === 'number' &&
-    Number.isInteger(value.pageNumber) &&
-    value.pageNumber > 0 &&
-    typeof value.scaleValue === 'string' &&
-    typeof value.scrollLeft === 'number' &&
-    Number.isFinite(value.scrollLeft) &&
-    typeof value.scrollTop === 'number' &&
-    Number.isFinite(value.scrollTop) &&
-    (value.outlineVisible === undefined ||
-      typeof value.outlineVisible === 'boolean')
-  );
-}
-
-function getWebviewMessage(message: unknown): WebviewMessage | undefined {
-  if (!isRecord(message)) {
-    return undefined;
-  }
-
-  if (hasExpectedKeys(message, ['type']) && message.type === 'open-source') {
-    return { type: 'open-source' };
-  }
-
-  if (hasExpectedKeys(message, ['type']) && message.type === 'open-external') {
-    return { type: 'open-external' };
-  }
-
-  if (
-    hasExpectedKeys(message, ['type', 'state']) &&
-    message.type === 'view-state' &&
-    isPersistedViewState(message.state)
-  ) {
-    return { type: 'view-state', state: message.state };
-  }
-
-  if (
-    hasExpectedKeys(message, ['type', 'pagesCount', 'pageNumber']) &&
-    message.type === 'viewer-ready' &&
-    typeof message.pagesCount === 'number' &&
-    Number.isInteger(message.pagesCount) &&
-    message.pagesCount > 0 &&
-    typeof message.pageNumber === 'number' &&
-    Number.isInteger(message.pageNumber) &&
-    message.pageNumber > 0
-  ) {
-    return {
-      type: 'viewer-ready',
-      pagesCount: message.pagesCount,
-      pageNumber: message.pageNumber,
-    };
-  }
-
-  if (
-    hasExpectedKeys(message, ['type', 'message']) &&
-    message.type === 'viewer-error' &&
-    typeof message.message === 'string'
-  ) {
-    return { type: 'viewer-error', message: message.message };
-  }
-
-  return undefined;
-}
-
-function viewStateKey(resource: vscode.Uri): string {
-  return `pdf-preview-next.view-state:${resource.with({ fragment: '' }).toString()}`;
-}
-
-function persistedViewStateOrUndefined(
-  value: unknown,
-): PersistedViewState | undefined {
-  return isPersistedViewState(value) ? value : undefined;
-}
 
 function getReloadDebounceMs(): number {
   const value = vscode.workspace
@@ -234,7 +115,7 @@ export class PdfPreview extends Disposable {
 
     this._register(
       webviewEditor.webview.onDidReceiveMessage((message: unknown) => {
-        const parsedMessage = getWebviewMessage(message);
+        const parsedMessage = parseViewerToHostMessage(message);
         if (!parsedMessage) {
           return;
         }
@@ -288,7 +169,8 @@ export class PdfPreview extends Disposable {
           return;
         }
 
-        void this.webviewEditor.webview.postMessage({ type: 'file-deleted' });
+        const webviewMessage: HostToViewerMessage = { type: 'file-deleted' };
+        void this.webviewEditor.webview.postMessage(webviewMessage);
       }),
     );
     this._register({ dispose: () => this.clearReloadTimer() });
@@ -313,13 +195,15 @@ export class PdfPreview extends Disposable {
 
   public refresh(): void {
     if (!this.isDisposed) {
-      this.webviewEditor.webview.postMessage({ type: 'reload' });
+      const message: HostToViewerMessage = { type: 'reload' };
+      this.webviewEditor.webview.postMessage(message);
     }
   }
 
   public print(): void {
     if (!this.isDisposed) {
-      this.webviewEditor.webview.postMessage({ type: 'print' });
+      const message: HostToViewerMessage = { type: 'print' };
+      this.webviewEditor.webview.postMessage(message);
     }
   }
 

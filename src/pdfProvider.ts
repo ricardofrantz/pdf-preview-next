@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { PdfPreview, type ViewerEvent } from './pdfPreview';
+import { PdfPreview } from './pdfPreview';
+import type { ViewerEvent } from './webviewContract';
 
 export type RecordedViewerEvent = ViewerEvent & { receivedAt: number };
 
