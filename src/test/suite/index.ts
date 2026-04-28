@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { PDF_WEBVIEW_OPTIONS } from '../../extension';
+import { PDF_VIEWER_BODY, renderPdfPreviewHtml } from '../../pdfPreview';
 import {
   parseViewerToHostMessage,
   persistedViewStateOrUndefined,
@@ -111,6 +112,49 @@ function assertWebviewContract(): void {
   );
 }
 
+function assertWebviewHtmlHooks(): void {
+  assert.match(
+    PDF_VIEWER_BODY,
+    /<button id="themeToggle"[^>]*>[\s\S]*?<span class="label">Clear<\/span>/,
+    'Viewer body hook should expose the page-mode button markup.',
+  );
+
+  const html = renderPdfPreviewHtml({
+    csp: "default-src 'none'; script-src 'nonce-fixed' vscode-resource:",
+    nonce: 'fixed',
+    config: {
+      path: 'vscode-resource://document.pdf',
+      appearance: { theme: 'reader' },
+    },
+    pdfViewerStylesUri: 'vscode-resource://pdf_viewer.css',
+    viewerStylesUri: 'vscode-resource://pdf.css',
+    mainScriptUri: 'vscode-resource://main.mjs',
+  });
+
+  assert.match(
+    html,
+    /<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-fixed' vscode-resource:">/,
+  );
+  assert.match(html, /<script nonce="fixed">/);
+  assert.match(
+    html,
+    /<script nonce="fixed" type="module" src="vscode-resource:\/\/main\.mjs"><\/script>/,
+  );
+  assert.match(
+    html,
+    /data-config="\{&quot;path&quot;:&quot;vscode-resource:\/\/document\.pdf&quot;,&quot;appearance&quot;:\{&quot;theme&quot;:&quot;reader&quot;\}\}"/,
+    'Viewer config should be embedded as escaped JSON in an HTML attribute.',
+  );
+  assert.match(
+    html,
+    /<link rel="stylesheet" href="vscode-resource:\/\/pdf_viewer\.css">/,
+  );
+  assert.match(
+    html,
+    /<link rel="stylesheet" href="vscode-resource:\/\/pdf\.css">/,
+  );
+}
+
 async function assertCheckedInFixtures(
   extension: vscode.Extension<unknown>,
 ): Promise<void> {
@@ -153,6 +197,7 @@ async function assertCheckedInFixtures(
 
 export async function run(): Promise<void> {
   assertWebviewContract();
+  assertWebviewHtmlHooks();
 
   const extension = vscode.extensions.all.find(
     ({ packageJSON }) => packageJSON.name === 'pdf-preview-next',

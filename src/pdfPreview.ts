@@ -26,7 +26,16 @@ function getReloadDebounceMs(): number {
   return Math.min(Math.max(Math.trunc(value), 0), 10_000);
 }
 
-const PDF_VIEWER_BODY = `<body>
+export interface PdfPreviewHtmlOptions {
+  csp: string;
+  nonce: string;
+  config: unknown;
+  pdfViewerStylesUri: string;
+  viewerStylesUri: string;
+  mainScriptUri: string;
+}
+
+export const PDF_VIEWER_BODY = `<body>
   <svg style="display: none;">
     <symbol id="icon-chevron-left" viewBox="0 0 16 16" fill="none">
       <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
@@ -172,6 +181,69 @@ const PDF_VIEWER_BODY = `<body>
     </div>
   </div>
 </body>`;
+
+function htmlAttributeJson(value: unknown): string {
+  return JSON.stringify(value).replace(/"/g, '&quot;');
+}
+
+export function renderPdfPreviewHtml({
+  csp,
+  nonce,
+  config,
+  pdfViewerStylesUri,
+  viewerStylesUri,
+  mainScriptUri,
+}: PdfPreviewHtmlOptions): string {
+  const head = `<!DOCTYPE html>
+<html dir="ltr" mozdisallowselectionprint>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="google" content="notranslate">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-Security-Policy" content="${csp}">
+<meta id="pdf-preview-config" data-config="${htmlAttributeJson(config)}">
+<title>PDF Preview Next</title>
+<link rel="stylesheet" href="${pdfViewerStylesUri}">
+<link rel="stylesheet" href="${viewerStylesUri}">
+<script nonce="${nonce}">
+(() => {
+  let startupError = '';
+  const applyStartupError = () => {
+    if (!startupError) {
+      return;
+    }
+    const status = document.getElementById('status');
+    if (!status) {
+      return;
+    }
+    status.textContent = startupError;
+    status.title = startupError;
+    status.classList.add('is-visible');
+  };
+  const messageFromReason = (reason) =>
+    reason && typeof reason === 'object' && 'message' in reason
+      ? reason.message
+      : String(reason);
+  const showStartupError = (reason) => {
+    startupError = 'Could not start PDF viewer: ' + messageFromReason(reason);
+    applyStartupError();
+    console.error('PDF Preview: startup error', reason);
+  };
+  window.addEventListener('error', (event) => {
+    showStartupError(event.error || event.message);
+  });
+  window.addEventListener('unhandledrejection', (event) => {
+    showStartupError(event.reason);
+  });
+  window.addEventListener('DOMContentLoaded', applyStartupError, { once: true });
+})();
+</script>
+<script nonce="${nonce}" type="module" src="${mainScriptUri}"></script>
+</head>`;
+
+  return head + PDF_VIEWER_BODY + '</html>';
+}
 
 export class PdfPreview extends Disposable {
   private reloadTimer: ReturnType<typeof setTimeout> | undefined;
@@ -357,54 +429,13 @@ export class PdfPreview extends Disposable {
       `worker-src ${cspSource} blob:`,
     ].join('; ');
 
-    const head = `<!DOCTYPE html>
-<html dir="ltr" mozdisallowselectionprint>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<meta name="google" content="notranslate">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta http-equiv="Content-Security-Policy" content="${csp}">
-<meta id="pdf-preview-config" data-config="${JSON.stringify(settings).replace(/"/g, '&quot;')}">
-<title>PDF Preview Next</title>
-<link rel="stylesheet" href="${resolve(...pdfjsDir, 'web', 'pdf_viewer.css')}">
-<link rel="stylesheet" href="${resolve('lib', 'pdf.css')}">
-<script nonce="${nonce}">
-(() => {
-  let startupError = '';
-  const applyStartupError = () => {
-    if (!startupError) {
-      return;
-    }
-    const status = document.getElementById('status');
-    if (!status) {
-      return;
-    }
-    status.textContent = startupError;
-    status.title = startupError;
-    status.classList.add('is-visible');
-  };
-  const messageFromReason = (reason) =>
-    reason && typeof reason === 'object' && 'message' in reason
-      ? reason.message
-      : String(reason);
-  const showStartupError = (reason) => {
-    startupError = 'Could not start PDF viewer: ' + messageFromReason(reason);
-    applyStartupError();
-    console.error('PDF Preview: startup error', reason);
-  };
-  window.addEventListener('error', (event) => {
-    showStartupError(event.error || event.message);
-  });
-  window.addEventListener('unhandledrejection', (event) => {
-    showStartupError(event.reason);
-  });
-  window.addEventListener('DOMContentLoaded', applyStartupError, { once: true });
-})();
-</script>
-<script nonce="${nonce}" type="module" src="${resolve('lib', 'main.mjs')}"></script>
-</head>`;
-
-    return head + PDF_VIEWER_BODY + '</html>';
+    return renderPdfPreviewHtml({
+      csp,
+      nonce,
+      config: settings,
+      pdfViewerStylesUri: resolve(...pdfjsDir, 'web', 'pdf_viewer.css'),
+      viewerStylesUri: resolve('lib', 'pdf.css'),
+      mainScriptUri: resolve('lib', 'main.mjs'),
+    });
   }
 }
