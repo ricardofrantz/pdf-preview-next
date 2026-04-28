@@ -8,9 +8,10 @@ Status legend: `[ ]` todo, `[~]` in progress, `[x]` done.
 
 ## Prerequisite
 
-Do not start this version until `v1.4.6` (loader correctness + render
-regression test) has shipped and been verified by installing the VSIX and
-opening at least one PDF. Adding `pageColors` on top of an unverified loader
+Do not start this version until `v1.4.7` (responsive toolbar) — and
+transitively `v1.4.6` (loader correctness + render regression test) — has
+shipped and been verified by installing the VSIX and opening at least one
+PDF. Adding `pageColors` on top of an unverified loader
 caused users in `1.4.x` to misread blank-viewer bugs as dark-mode failures.
 
 ## Scope
@@ -52,9 +53,10 @@ use `inverted`.
 - [ ] Run `git status --short`.
 - [ ] The current tree may already contain unrelated edits. Do not revert or
       stage them unless they are part of this release.
-- [ ] Confirm `v1.4.6` (loader correctness + render regression test) is the
-      tagged prior release. Do not start dark-mode work if `1.4.x` blank-viewer
-      regressions are still open.
+- [ ] Confirm `v1.4.7` (responsive toolbar) is the tagged prior release and
+      `v1.4.6` (loader correctness + render regression test) shipped before
+      it. Do not start dark-mode work if `1.4.x` blank-viewer or toolbar
+      clipping regressions are still open.
 - [ ] Before editing any dirty release file, inspect its diff:
 
 ```bash

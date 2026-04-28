@@ -37,6 +37,16 @@ threw before loading the PDF. The markup now uses a layout wrapper plus
 `<div id="viewerContainer" role="main" tabindex="0">`, with the PDF.js
 container styled as `position: absolute; inset: 0`.
 
+A third runtime blocker surfaced once both of the above were fixed: PDF.js
+5.6.205 calls `Map.prototype.getOrInsertComputed` and
+`WeakMap.prototype.getOrInsertComputed` (TC39 Stage 3 "Upsert" proposal) in
+its download, annotation, and rendering paths. Those methods are not yet
+shipped in the V8 inside current VS Code Electron builds (verified on VS Code
+`1.117.0`). The first PDF render attempt throws
+`this[#fr].getOrInsertComputed is not a function` and the toolbar status
+shows `Could not load PDF: …`. A small polyfill module (`lib/polyfills.mjs`)
+patches both prototypes before any PDF.js module is imported.
+
 This was masked by:
 
 - Static tests only verifying source patterns, not real render.
@@ -50,9 +60,13 @@ This was masked by:
   so the app starts even if the event already fired.
 - Keep the PDF.js `container` and `viewer` constructor options backed by `DIV`
   elements, with the visible container absolutely positioned.
+- Add a `lib/polyfills.mjs` module that patches `Map.prototype` and
+  `WeakMap.prototype` with `getOrInsertComputed`, and import it from
+  `lib/main.mjs` before any PDF.js module so the patch runs before the
+  viewer evaluates.
 - Remove temporary diagnostic banner/logging instrumentation before committing.
-- Add automated source-level assertions for the ready-state bootstrap path and
-  the PDF.js viewer-container element contract.
+- Add automated source-level assertions for the ready-state bootstrap path,
+  the PDF.js viewer-container element contract, and the polyfill import order.
 - Add a manual install-and-open verification gate to the release process.
 
 ## Non-Goals
@@ -66,6 +80,7 @@ This was masked by:
 ## Likely Files
 
 - `lib/main.mjs`
+- `lib/polyfills.mjs` (new)
 - `src/pdfPreview.ts`
 - `src/test/suite/index.ts`
 - `package.json`
@@ -91,16 +106,23 @@ This was masked by:
 4. Change `viewerContainer` from `<main>` to an absolutely positioned
    `<div role="main">`, because PDF.js 5 rejects non-`DIV` and non-absolute
    container elements.
-5. Add assertions in `src/test/suite/index.ts` for:
+5. Create `lib/polyfills.mjs` patching `Map.prototype.getOrInsertComputed`
+   and `WeakMap.prototype.getOrInsertComputed` if missing. Add `import
+   './polyfills.mjs';` as the very first line of `lib/main.mjs`, above
+   the static import of `pdfjs/build/pdf.min.mjs`, so the polyfill module
+   evaluates before PDF.js does.
+6. Add assertions in `src/test/suite/index.ts` for:
    - `document.readyState === 'loading'` fallback logic.
    - `DOMContentLoaded` registration only on the loading path.
    - `<div id="viewerContainer" role="main" tabindex="0">`.
    - `#viewerContainer { position: absolute; inset: 0; }`.
    - no `<main id="viewerContainer">` regression.
-6. Update `CHANGELOG.md` with a `1.4.6` entry describing the load-order fix,
-   the PDF.js `DIV`/absolute-positioned container requirement, and the cleanup
-   of temporary diagnostics.
-7. Update `README.md` install command to `pdf-preview-next-1.4.6.vsix`.
+   - `lib/polyfills.mjs` exists and is the first import in `lib/main.mjs`,
+     ahead of any `./pdfjs/...` import.
+7. Update `CHANGELOG.md` with a `1.4.6` entry describing the load-order fix,
+   the PDF.js `DIV`/absolute-positioned container requirement, the
+   `getOrInsertComputed` polyfill, and the cleanup of temporary diagnostics.
+8. Update `README.md` install command to `pdf-preview-next-1.4.6.vsix`.
 
 ## Tests
 

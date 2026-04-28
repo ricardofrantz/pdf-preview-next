@@ -35,38 +35,46 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
    - Add regression assertions for the startup path and viewer-container
      contract.
 
-2. [v1.5.0 Dark PDF Rendering](plan_v1.5.0_dark_pages.md)
+2. [v1.4.7 Responsive Toolbar](plan_v1.4.7_responsive_toolbar.md)
+   - Replace toolbar text labels with inline SVG icons + hidden `.label`
+     spans.
+   - Hide labels below 720 px via a container query so buttons become
+     icon-only on narrow splits.
+   - Remove the `overflow-x: auto` rule that silently clipped the
+     right-hand actions in narrow editor panes.
+
+3. [v1.5.0 Dark PDF Rendering](plan_v1.5.0_dark_pages.md)
    - Add `dark-pages` backed by PDF.js `pageColors`.
    - Keep `inverted` as the fallback for scanned or image-heavy PDFs.
    - Preserve `auto` as the unchanged default.
 
-3. [v1.6.0 Foundation And Settings](plan_v1.6.0_foundation_settings.md)
+4. [v1.6.0 Foundation And Settings](plan_v1.6.0_foundation_settings.md)
    - Expand fixture/test matrix: outline, password, broken, large.
    - Make settings resource-scoped where appropriate.
    - Add a reset-view-state command so defaults can be reapplied cleanly.
 
-4. [v1.7.0 Inter-PDF Links](plan_v1.7.0_inter_pdf_links.md)
+5. [v1.7.0 Inter-PDF Links](plan_v1.7.0_inter_pdf_links.md)
    - Add safe internal handling for links from one local PDF to another.
    - Preserve fragments such as `#page=3`.
    - Avoid patching vendored PDF.js.
 
-5. [v1.8.0 Focus Preservation](plan_v1.8.0_viewer_ux_parity.md)
+6. [v1.8.0 Focus Preservation](plan_v1.8.0_viewer_ux_parity.md)
    - Stop file-watcher reload from stealing focus from the source editor.
    - Toolbar polish only where it does not destabilize layout.
    - Thumbnails are explicitly out of scope for this release.
 
-6. [v1.9.0 Thumbnail Navigation](plan_v1.9.0_thumbnails.md)
+7. [v1.9.0 Thumbnail Navigation](plan_v1.9.0_thumbnails.md)
    - Add a thumbnail panel built on PDF.js primitives without importing the
      full upstream viewer shell.
    - Bound memory and rendering cost.
    - Extend sidebar persistence to the active panel.
 
-7. [v1.10.0 Build And Release Automation](plan_v1.10.0_build_release.md)
+8. [v1.10.0 Build And Release Automation](plan_v1.10.0_build_release.md)
    - Bundle the extension entrypoint with esbuild.
    - Pin GitHub Actions by SHA.
    - Strengthen guarded release and package scanning workflows.
 
-8. [v2.0.0 Public Release](plan_v2.0.0_public_release.md)
+9. [v2.0.0 Public Release](plan_v2.0.0_public_release.md)
    - Finish Marketplace/Open VSX readiness.
    - Refresh public docs, screenshots, and security notes.
    - Publish only after local VSIX verification, registry token checks, and
@@ -90,9 +98,16 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 - And then with the **mandatory install-and-open gate**:
   - `code --uninstall-extension ricardofrantz.pdf-preview-next`
   - `rm -rf ~/.vscode/extensions/ricardofrantz.pdf-preview-next-*`
-    (older cached versions otherwise mask new builds)
+    (older cached versions otherwise mask new builds; `--force` alone
+    is **not** reliable when the extension is loaded in memory — VS Code
+    silently keeps the in-memory copy and the on-disk files do not update)
   - Fully quit VS Code (Cmd+Q on macOS), then relaunch.
-  - `code --install-extension <built-vsix> --force`
+  - `code --install-extension <built-vsix>`
+  - In VS Code, run `Developer: Reload Window` from the command palette,
+    or fully quit and relaunch again, before opening a PDF.
+  - Verify the new files are actually on disk:
+    `ls ~/.vscode/extensions/ricardofrantz.pdf-preview-next-*/lib/` should
+    contain every file the new VSIX adds (`polyfills.mjs`, etc.).
   - Open at least one fixture PDF and confirm:
     - viewer shows a non-zero page count
     - scrolling, find, refresh, and source open work
