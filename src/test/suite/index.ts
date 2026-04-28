@@ -50,10 +50,24 @@ export async function run(): Promise<void> {
   assert.match(webviewSourceText, /addEventListener\('unhandledrejection'/);
   assert.match(
     webviewSourceText,
-    /<div id="viewerContainer" role="main" tabindex="0">/,
-    'PDF.js 5 requires the viewer container option to be a DIV element.',
+    /<div class="viewer-region">\s*<div id="viewerContainer" role="main" tabindex="0">/,
+    'PDF.js 5 requires the viewer container option to be an absolutely positioned DIV element.',
   );
   assert.doesNotMatch(webviewSourceText, /<main id="viewerContainer"/);
+
+  const viewerStyles = await vscode.workspace.fs.readFile(
+    vscode.Uri.joinPath(extension.extensionUri, 'lib', 'pdf.css'),
+  );
+  const viewerStylesText = Buffer.from(viewerStyles).toString('utf8');
+  assert.match(
+    viewerStylesText,
+    /\.viewer-region\s*{[^}]*position: relative;/s,
+  );
+  assert.match(
+    viewerStylesText,
+    /#viewerContainer\s*{[^}]*position: absolute;/s,
+  );
+  assert.match(viewerStylesText, /#viewerContainer\s*{[^}]*inset: 0;/s);
 
   const viewerScript = await vscode.workspace.fs.readFile(
     vscode.Uri.joinPath(extension.extensionUri, 'lib', 'main.mjs'),

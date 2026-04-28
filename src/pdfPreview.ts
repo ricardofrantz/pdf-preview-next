@@ -156,8 +156,10 @@ const PDF_VIEWER_BODY = `<body>
         <div class="outline-header">Outline</div>
         <div id="outlineTree" class="outline-tree"></div>
       </aside>
-      <div id="viewerContainer" role="main" tabindex="0">
-        <div id="viewer" class="pdfViewer"></div>
+      <div class="viewer-region">
+        <div id="viewerContainer" role="main" tabindex="0">
+          <div id="viewer" class="pdfViewer"></div>
+        </div>
       </div>
     </div>
     <div id="passwordOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="passwordTitle">

@@ -30,10 +30,12 @@ pages forever.
 
 After that race was fixed, the viewer began starting and exposed a second
 startup blocker: PDF.js 5.6.205 validates that both `container` and `viewer`
-passed to `new PDFViewer(...)` are `DIV` elements. The extension supplied a
-semantic `<main id="viewerContainer">`, so PDF.js threw
-`Invalid container and/or viewer option` before loading the PDF. The markup now
-uses `<div id="viewerContainer" role="main" tabindex="0">`.
+passed to `new PDFViewer(...)` are `DIV` elements, and then validates that the
+visible `container` is absolutely positioned. The extension supplied a semantic
+`<main id="viewerContainer">` and then a relative-positioned `DIV`, so PDF.js
+threw before loading the PDF. The markup now uses a layout wrapper plus
+`<div id="viewerContainer" role="main" tabindex="0">`, with the PDF.js
+container styled as `position: absolute; inset: 0`.
 
 This was masked by:
 
@@ -47,7 +49,7 @@ This was masked by:
 - Replace the `DOMContentLoaded` registration with a `document.readyState` check
   so the app starts even if the event already fired.
 - Keep the PDF.js `container` and `viewer` constructor options backed by `DIV`
-  elements.
+  elements, with the visible container absolutely positioned.
 - Remove temporary diagnostic banner/logging instrumentation before committing.
 - Add automated source-level assertions for the ready-state bootstrap path and
   the PDF.js viewer-container element contract.
@@ -86,16 +88,18 @@ This was masked by:
      ```
 3. Keep the bootstrap error handler in `src/pdfPreview.ts` writing startup
    errors to the toolbar status without retaining temporary diagnostic banners.
-4. Change `viewerContainer` from `<main>` to `<div role="main">`, because PDF.js
-   5 rejects non-`DIV` container/viewer elements.
+4. Change `viewerContainer` from `<main>` to an absolutely positioned
+   `<div role="main">`, because PDF.js 5 rejects non-`DIV` and non-absolute
+   container elements.
 5. Add assertions in `src/test/suite/index.ts` for:
    - `document.readyState === 'loading'` fallback logic.
    - `DOMContentLoaded` registration only on the loading path.
    - `<div id="viewerContainer" role="main" tabindex="0">`.
+   - `#viewerContainer { position: absolute; inset: 0; }`.
    - no `<main id="viewerContainer">` regression.
 6. Update `CHANGELOG.md` with a `1.4.6` entry describing the load-order fix,
-   the PDF.js `DIV` container requirement, and the cleanup of temporary
-   diagnostics.
+   the PDF.js `DIV`/absolute-positioned container requirement, and the cleanup
+   of temporary diagnostics.
 7. Update `README.md` install command to `pdf-preview-next-1.4.6.vsix`.
 
 ## Tests
@@ -118,8 +122,8 @@ This was masked by:
 
 - Opening a normal PDF renders pages without manual intervention.
 - No startup error appears in the toolbar status on success.
-- Automated tests fail if the ready-state startup path or `DIV` viewer-container
-  contract regresses.
+- Automated tests fail if the ready-state startup path or PDF.js
+  viewer-container contract regresses.
 - No previously installed `1.4.x` cached extensions remain in
   `~/.vscode/extensions/` during verification.
 

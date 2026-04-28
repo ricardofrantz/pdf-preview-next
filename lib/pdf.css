@@ -162,6 +162,13 @@ body.theme-inverted {
   min-height: 0;
 }
 
+.viewer-region {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
 .outline-sidebar {
   flex: 0 0 240px;
   overflow: auto;
@@ -245,9 +252,8 @@ body.theme-inverted {
 }
 
 #viewerContainer {
-  position: relative;
-  flex: 1 1 auto;
-  min-width: 0;
+  position: absolute;
+  inset: 0;
   overflow: auto;
   scroll-padding: 12px;
   background: var(--vscode-editor-background);
@@ -388,6 +394,7 @@ body.theme-inverted .pdfViewer .page {
 
   #pdf-root,
   #pdf-content,
+  .viewer-region,
   #viewerContainer {
     position: static;
     display: block;

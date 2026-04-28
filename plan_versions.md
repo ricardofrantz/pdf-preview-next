@@ -12,8 +12,8 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 - Active plan: `plan_v1.4.6_loader_correctness.md`. The prior `1.4.x`
   releases all shipped a blank-PDF regression that static checks did not
   catch. `v1.4.6` fixes the load-order root cause (top-level `await` → late
-  `DOMContentLoaded` listener) and the PDF.js 5 viewer-container contract that
-  surfaced after startup began running.
+  `DOMContentLoaded` listener) and the PDF.js 5 viewer-container contract
+  failures that surfaced after startup began running.
 - Do not start any later version until `v1.4.6` is shipped *and* manually
   verified by installing the produced VSIX and opening a real PDF.
 - Baseline strengths to preserve:
@@ -30,8 +30,8 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 1. [v1.4.6 Loader Correctness](plan_v1.4.6_loader_correctness.md)
    - Fix the `DOMContentLoaded` race that made every `1.4.x` ship a blank
      viewer.
-   - Keep `viewerContainer` as a `div`, because PDF.js 5 rejects non-`DIV`
-     container/viewer elements.
+   - Keep `viewerContainer` as an absolutely positioned `div`, because PDF.js 5
+     rejects non-`DIV` and non-absolute container elements.
    - Add regression assertions for the startup path and viewer-container
      contract.
 
