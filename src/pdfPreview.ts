@@ -396,7 +396,10 @@ export class PdfPreview extends Disposable {
     const pdfjsDir = ['lib', 'pdfjs'];
     const buildDir = [...pdfjsDir, 'build'];
 
-    const config = vscode.workspace.getConfiguration('pdf-preview');
+    const pdfConfig = vscode.workspace.getConfiguration(
+      'pdf-preview',
+      this.resource,
+    );
     const settings = {
       cMapUrl: resolveDir(...pdfjsDir, 'cmaps'),
       iccUrl: resolveDir(...pdfjsDir, 'iccs'),
@@ -407,15 +410,15 @@ export class PdfPreview extends Disposable {
       wasmUrl: resolveDir(...pdfjsDir, 'wasm'),
       workerSrc: resolve(...buildDir, 'pdf.worker.min.mjs'),
       defaults: {
-        cursor: config.get<string>('default.cursor'),
-        scale: config.get<string>('default.scale'),
-        sidebar: config.get<boolean>('default.sidebar'),
-        scrollMode: config.get<string>('default.scrollMode'),
-        spreadMode: config.get<string>('default.spreadMode'),
+        cursor: pdfConfig.get<string>('default.cursor'),
+        scale: pdfConfig.get<string>('default.scale'),
+        sidebar: pdfConfig.get<boolean>('default.sidebar'),
+        scrollMode: pdfConfig.get<string>('default.scrollMode'),
+        spreadMode: pdfConfig.get<string>('default.spreadMode'),
       },
       appearance: {
-        pageGap: config.get<string>('appearance.pageGap'),
-        theme: config.get<string>('appearance.theme'),
+        pageGap: pdfConfig.get<string>('appearance.pageGap'),
+        theme: pdfConfig.get<string>('appearance.theme'),
       },
       reload: {
         debounceMs: getReloadDebounceMs(),

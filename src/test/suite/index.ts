@@ -210,6 +210,39 @@ async function assertCheckedInFixtures(
   );
 }
 
+async function assertRuntimeConfigurationScope(
+  extension: vscode.Extension<unknown>,
+): Promise<void> {
+  const compiledPreview = await readExtensionFile(
+    extension,
+    'out',
+    'src',
+    'pdfPreview.js',
+  );
+
+  assert.match(
+    compiledPreview,
+    /const pdfConfig = vscode\.workspace\.getConfiguration\(\s*'pdf-preview',\s*this\.resource,?\s*\);/,
+    'PDF-specific settings should be read with the opened PDF as the configuration scope.',
+  );
+
+  for (const setting of [
+    'default.cursor',
+    'default.scale',
+    'default.sidebar',
+    'default.scrollMode',
+    'default.spreadMode',
+    'appearance.pageGap',
+    'appearance.theme',
+  ]) {
+    assert.match(
+      compiledPreview,
+      new RegExp(`pdfConfig\\.get(?:<[^>]+>)?\\('${setting}'\\)`),
+      `${setting} should be read from the resource-scoped configuration.`,
+    );
+  }
+}
+
 export async function run(): Promise<void> {
   assertWebviewContract();
   assertWebviewHtmlHooks();
@@ -220,6 +253,7 @@ export async function run(): Promise<void> {
   assert.ok(extension, 'PDF Preview Next extension should be registered.');
   assert.strictEqual(extension.packageJSON.displayName, 'vscode-pdf Next');
   await assertCheckedInFixtures(extension);
+  await assertRuntimeConfigurationScope(extension);
 
   const sidebarDefault = vscode.workspace
     .getConfiguration('pdf-preview')
