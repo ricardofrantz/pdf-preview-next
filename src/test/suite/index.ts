@@ -111,6 +111,46 @@ function assertWebviewContract(): void {
   );
 }
 
+async function assertCheckedInFixtures(
+  extension: vscode.Extension<unknown>,
+): Promise<void> {
+  const fixtureDir = vscode.Uri.joinPath(
+    extension.extensionUri,
+    'src',
+    'test',
+    'fixtures',
+  );
+  const outlineBytes = await vscode.workspace.fs.readFile(
+    vscode.Uri.joinPath(fixtureDir, 'outline.pdf'),
+  );
+  const passwordBytes = await vscode.workspace.fs.readFile(
+    vscode.Uri.joinPath(fixtureDir, 'password.pdf'),
+  );
+  const brokenBytes = await vscode.workspace.fs.readFile(
+    vscode.Uri.joinPath(fixtureDir, 'broken.pdf'),
+  );
+
+  const outlineText = Buffer.from(outlineBytes).toString('latin1');
+  const passwordText = Buffer.from(passwordBytes).toString('latin1');
+  const brokenText = Buffer.from(brokenBytes).toString('latin1');
+
+  assert.match(outlineText, /^%PDF-1\.4/);
+  assert.match(outlineText, /\/Outlines 8 0 R/);
+  assert.match(outlineText, /\/Count 2/);
+  assert.match(outlineText, /%%EOF\s*$/);
+
+  assert.match(passwordText, /^%PDF-/);
+  assert.match(passwordText, /\/Encrypt\b/);
+  assert.match(passwordText, /%%EOF\s*$/);
+
+  assert.match(brokenText, /^%PDF-1\.4/);
+  assert.doesNotMatch(brokenText, /%%EOF\s*$/);
+  assert.ok(
+    brokenBytes.byteLength < outlineBytes.byteLength,
+    'Broken fixture should be a truncated variant of the outline fixture.',
+  );
+}
+
 export async function run(): Promise<void> {
   assertWebviewContract();
 
@@ -119,6 +159,7 @@ export async function run(): Promise<void> {
   );
   assert.ok(extension, 'PDF Preview Next extension should be registered.');
   assert.strictEqual(extension.packageJSON.displayName, 'vscode-pdf Next');
+  await assertCheckedInFixtures(extension);
 
   const sidebarDefault = vscode.workspace
     .getConfiguration('pdf-preview')
