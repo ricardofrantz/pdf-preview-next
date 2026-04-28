@@ -252,6 +252,13 @@ export function webviewLocalResourceRoots(
   return [extensionRoot, vscode.Uri.joinPath(resource, '..')];
 }
 
+export async function clearPdfPreviewViewState(
+  workspaceState: vscode.Memento,
+  resource: vscode.Uri,
+): Promise<void> {
+  await workspaceState.update(viewStateKey(resource), undefined);
+}
+
 export class PdfPreview extends Disposable {
   private reloadTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -364,6 +371,10 @@ export class PdfPreview extends Disposable {
       const message: HostToViewerMessage = { type: 'print' };
       this.webviewEditor.webview.postMessage(message);
     }
+  }
+
+  public async resetViewState(): Promise<void> {
+    await clearPdfPreviewViewState(this.workspaceState, this.resource);
   }
 
   private scheduleReload(): void {

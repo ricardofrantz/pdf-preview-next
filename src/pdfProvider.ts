@@ -85,6 +85,20 @@ export class PdfCustomProvider implements vscode.CustomReadonlyEditorProvider {
     this.activePreview.print();
   }
 
+  public async resetViewStateForActivePreview(): Promise<void> {
+    if (!this.activePreview) {
+      await vscode.window.showInformationMessage(
+        'Open a PDF Preview Next tab first.',
+      );
+      return;
+    }
+
+    await this.activePreview.resetViewState();
+    await vscode.window.showInformationMessage(
+      'Reset view state for the current PDF.',
+    );
+  }
+
   public waitForViewerEvent(
     resource: string,
     timeoutMs = 15000,

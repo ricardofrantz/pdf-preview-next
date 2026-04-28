@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { PDF_WEBVIEW_OPTIONS } from '../../extension';
 import {
   PDF_VIEWER_BODY,
+  clearPdfPreviewViewState,
   renderPdfPreviewHtml,
   webviewLocalResourceRoots,
 } from '../../pdfPreview';
@@ -170,6 +171,24 @@ function assertWebviewHtmlHooks(): void {
   );
 }
 
+async function assertViewStateResetHelper(): Promise<void> {
+  const resource = vscode.Uri.parse('file:///workspace/docs/paper.pdf#page=2');
+  const updates: Array<[string, unknown]> = [];
+  const workspaceState = {
+    keys: () => [],
+    get: <T>(_key: string, defaultValue?: T): T | undefined => defaultValue,
+    update: async (key: string, value: unknown): Promise<void> => {
+      updates.push([key, value]);
+    },
+  } as vscode.Memento;
+
+  await clearPdfPreviewViewState(workspaceState, resource);
+
+  assert.deepStrictEqual(updates, [
+    ['pdf-preview-next.view-state:file:///workspace/docs/paper.pdf', undefined],
+  ]);
+}
+
 async function assertCheckedInFixtures(
   extension: vscode.Extension<unknown>,
 ): Promise<void> {
@@ -246,6 +265,7 @@ async function assertRuntimeConfigurationScope(
 export async function run(): Promise<void> {
   assertWebviewContract();
   assertWebviewHtmlHooks();
+  await assertViewStateResetHelper();
 
   const extension = vscode.extensions.all.find(
     ({ packageJSON }) => packageJSON.name === 'pdf-preview-next',
@@ -335,6 +355,15 @@ export async function run(): Promise<void> {
     'pdf-preview.openSource',
     'pdf-preview.print',
     'pdf-preview.refreshPreview',
+    'pdf-preview.resetViewState',
+  ]);
+  assert.deepStrictEqual([...extension.packageJSON.activationEvents].sort(), [
+    'onCommand:pdf-preview.openPreview',
+    'onCommand:pdf-preview.openSource',
+    'onCommand:pdf-preview.print',
+    'onCommand:pdf-preview.refreshPreview',
+    'onCommand:pdf-preview.resetViewState',
+    'onCustomEditor:pdf-preview-next.preview',
   ]);
   const commandTitles = new Map(
     extension.packageJSON.contributes.commands.map(
@@ -347,6 +376,10 @@ export async function run(): Promise<void> {
   assert.strictEqual(
     commandTitles.get('pdf-preview.openSource'),
     'vscode-pdf Next: Open Externally',
+  );
+  assert.strictEqual(
+    commandTitles.get('pdf-preview.resetViewState'),
+    'PDF Preview Next: Reset View State',
   );
   assert.strictEqual(PDF_WEBVIEW_OPTIONS.retainContextWhenHidden, false);
 
