@@ -4,3 +4,4 @@ node_modules
 *.tgz
 .work/
 .vscode-test/
+.beads/.br_history/

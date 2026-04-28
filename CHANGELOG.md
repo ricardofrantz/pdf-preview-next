@@ -2,6 +2,42 @@
 
 ## Unreleased
 
+## 1.5.0 (2026/04/28)
+
+- Add `night` to `pdf-preview.appearance.theme`, using PDF.js page recoloring
+  for lower-eye-strain reading in dark VS Code setups.
+- Add `reader` to `pdf-preview.appearance.theme` as the future smart
+  color-preserving reader mode; it currently uses the safe night rendering path.
+- Add a toolbar page-mode cycle for switching the active preview between
+  `Clear`, `Night`, `Reader`, and `Invert`; the choice is kept across preview
+  refreshes and newly opened PDFs.
+- Keep the dark page background applied while a dark preview refreshes, avoiding
+  a brief white page flash during PDF.js reload.
+- Keep `dark-pages` as a compatibility alias for `night`.
+- Keep `inverted` available as the fallback mode for scanned or image-heavy PDFs
+  where page recoloring is not appropriate.
+- Preserve the default `auto` appearance behavior for existing users.
+
+## 1.4.8 (2026/04/28)
+
+- Fix the toolbar `External` button and `Open Externally` command path so PDFs
+  open through the system PDF handler instead of VS Code's binary/text fallback
+  editor.
+- Add packaged-artifact assertions that reject the old
+  `vscode.openWith(..., 'default')` Source path.
+- Relabel the toolbar action from `Source` to `External` and switch its icon to
+  match the corrected behavior.
+- Increase find-result highlight contrast, with a stronger active-match color
+  in light, dark, and inverted themes.
+
+## 1.4.7 (2026/04/28)
+
+- Replace toolbar button text with inline SVG icons (chevrons, zoom, search, list-tree, printer, refresh, file-code) using a single SVG symbol block with currentColor strokes.
+- Add icon+label structure to toolbar buttons with labels hidden below 720px container width using CSS container queries.
+- Remove horizontal scroll from toolbar and use container-type: inline-size for responsive layout.
+- Tighten toolbar gaps (8px→6px, 5px→4px) and make find input flex within its group.
+- Add toolbar contract assertions to test suite for button structure, accessibility, and responsive CSS.
+
 ## 1.4.6 (2026/04/28)
 
 - Fix the preview bootstrap race where the async PDF.js viewer module could

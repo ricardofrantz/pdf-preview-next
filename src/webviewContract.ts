@@ -9,6 +9,17 @@ export interface PersistedViewState {
 }
 
 export type ViewerToHostMessage =
+  | {
+      type: 'appearance-theme';
+      theme:
+        | 'auto'
+        | 'light'
+        | 'dark'
+        | 'night'
+        | 'reader'
+        | 'dark-pages'
+        | 'inverted';
+    }
   | { type: 'open-external' }
   | { type: 'open-source' }
   | { type: 'view-state'; state: PersistedViewState }
@@ -87,6 +98,20 @@ export function parseViewerToHostMessage(
 
   if (hasExpectedKeys(message, ['type']) && message.type === 'open-external') {
     return { type: 'open-external' };
+  }
+
+  if (
+    hasExpectedKeys(message, ['type', 'theme']) &&
+    message.type === 'appearance-theme' &&
+    (message.theme === 'auto' ||
+      message.theme === 'light' ||
+      message.theme === 'dark' ||
+      message.theme === 'night' ||
+      message.theme === 'reader' ||
+      message.theme === 'dark-pages' ||
+      message.theme === 'inverted')
+  ) {
+    return { type: 'appearance-theme', theme: message.theme };
   }
 
   if (

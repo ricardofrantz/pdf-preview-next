@@ -1,10 +1,13 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
+import { assertViewerContract } from './viewer_contract.mjs';
 
 const mainSource = await readFile('lib/main.mjs', 'utf8');
 const polyfillsSource = await readFile('lib/polyfills.mjs', 'utf8');
 const viewerSource = await readFile('lib/pdfjs/web/pdf_viewer.mjs', 'utf8');
+const webviewSource = await readFile('out/src/pdfPreview.js', 'utf8');
+const stylesSource = await readFile('lib/pdf.css', 'utf8');
 
 const polyfillsImportIndex = mainSource.indexOf("import './polyfills.mjs';");
 const pdfCoreImportIndex = mainSource.indexOf(
@@ -97,3 +100,10 @@ assert.equal(
   ),
   false,
 );
+
+assertViewerContract({
+  webviewSource,
+  stylesSource,
+  viewerScriptSource: mainSource,
+  context: 'compiled webview',
+});

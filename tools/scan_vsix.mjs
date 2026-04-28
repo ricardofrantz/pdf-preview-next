@@ -1,9 +1,11 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import { basename, join } from 'node:path';
+import { assertViewerContract } from './viewer_contract.mjs';
 
 const forbiddenEntries = [
   /^extension\/\.github\//,
+  /^extension\/\.beads\//,
   /^extension\/\.work\//,
   /^extension\/src\//,
   /^extension\/test\//,
@@ -61,5 +63,19 @@ if (offenders.length > 0) {
   }
   process.exit(1);
 }
+
+function readVsixEntry(entry) {
+  return execFileSync('unzip', ['-p', vsixPath, entry], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+}
+
+assertViewerContract({
+  webviewSource: readVsixEntry('extension/out/src/pdfPreview.js'),
+  stylesSource: readVsixEntry('extension/lib/pdf.css'),
+  viewerScriptSource: readVsixEntry('extension/lib/main.mjs'),
+  context: basename(vsixPath),
+});
 
 console.log(`VSIX content scan passed: ${basename(vsixPath)}`);

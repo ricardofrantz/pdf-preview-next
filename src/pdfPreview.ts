@@ -27,16 +27,72 @@ function getReloadDebounceMs(): number {
 }
 
 const PDF_VIEWER_BODY = `<body>
+  <svg style="display: none;">
+    <symbol id="icon-chevron-left" viewBox="0 0 16 16" fill="none">
+      <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-chevron-right" viewBox="0 0 16 16" fill="none">
+      <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-zoom-out" viewBox="0 0 16 16" fill="none">
+      <path d="M3 8H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-zoom-in" viewBox="0 0 16 16" fill="none">
+      <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-search" viewBox="0 0 16 16" fill="none">
+      <circle cx="7" cy="7" r="4" stroke="currentColor" stroke-width="1.33"/>
+      <path d="M10 10L13 13" stroke="currentColor" stroke-width="1.33" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-chevron-up" viewBox="0 0 16 16" fill="none">
+      <path d="M4 10L8 6L12 10" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-chevron-down" viewBox="0 0 16 16" fill="none">
+      <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-list-tree" viewBox="0 0 16 16" fill="none">
+      <path d="M3 3H13M3 8H13M3 13H13" stroke="currentColor" stroke-width="1.33" stroke-linecap="round"/>
+      <circle cx="1" cy="3" r="1" fill="currentColor"/>
+      <circle cx="1" cy="8" r="1" fill="currentColor"/>
+      <circle cx="1" cy="13" r="1" fill="currentColor"/>
+    </symbol>
+    <symbol id="icon-printer" viewBox="0 0 16 16" fill="none">
+      <path d="M3 6H13C13.55 6 14 6.45 14 7V11C14 11.55 13.55 12 13 12H3C2.45 12 2 11.55 2 11V7C2 6.45 2.45 6 3 6Z" stroke="currentColor" stroke-width="1.33"/>
+      <path d="M4 6V4C4 3.45 4.45 3 5 3H11C11.55 3 12 3.45 12 4V6" stroke="currentColor" stroke-width="1.33"/>
+      <path d="M4 12V14C4 14.55 4.45 15 5 15H11C11.55 15 12 14.55 12 14V12" stroke="currentColor" stroke-width="1.33"/>
+    </symbol>
+    <symbol id="icon-refresh" viewBox="0 0 16 16" fill="none">
+      <path d="M13 8A5 5 0 1 0 8 13" stroke="currentColor" stroke-width="1.33" stroke-linecap="round"/>
+      <path d="M13 8V5M13 8H10" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-external-link" viewBox="0 0 16 16" fill="none">
+      <path d="M6 4H4C3.45 4 3 4.45 3 5V12C3 12.55 3.45 13 4 13H11C11.55 13 12 12.55 12 12V10" stroke="currentColor" stroke-width="1.33" stroke-linecap="round"/>
+      <path d="M9 3H13V7" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M8 8L13 3" stroke="currentColor" stroke-width="1.33" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-theme" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="4.5" stroke="currentColor" stroke-width="1.33"/>
+      <path d="M8 3.5A4.5 4.5 0 0 0 8 12.5V3.5Z" fill="currentColor"/>
+    </symbol>
+  </svg>
   <div id="pdf-root">
     <header id="pdf-toolbar" role="toolbar" aria-label="PDF controls">
       <div class="toolbar-group">
-        <button id="previous" class="icon-button" type="button" title="Previous page" aria-label="Previous page">Prev</button>
-        <button id="next" class="icon-button" type="button" title="Next page" aria-label="Next page">Next</button>
+        <button id="previous" class="icon-button" type="button" title="Previous page" aria-label="Previous page">
+          <svg class="icon" width="16" height="16"><use href="#icon-chevron-left"/></svg>
+          <span class="label">Prev</span>
+        </button>
+        <button id="next" class="icon-button" type="button" title="Next page" aria-label="Next page">
+          <svg class="icon" width="16" height="16"><use href="#icon-chevron-right"/></svg>
+          <span class="label">Next</span>
+        </button>
         <input id="pageNumber" type="number" min="1" value="1" title="Page" aria-label="Page number">
         <span id="numPages">of 0</span>
       </div>
       <div class="toolbar-group">
-        <button id="zoomOut" class="icon-button" type="button" title="Zoom out" aria-label="Zoom out">-</button>
+        <button id="zoomOut" class="icon-button" type="button" title="Zoom out" aria-label="Zoom out">
+          <svg class="icon" width="16" height="16"><use href="#icon-zoom-out"/></svg>
+        </button>
         <select id="scaleSelect" title="Zoom" aria-label="Zoom">
           <option value="auto">Auto</option>
           <option value="page-actual">Actual</option>
@@ -51,20 +107,44 @@ const PDF_VIEWER_BODY = `<body>
           <option value="3">300%</option>
           <option value="4">400%</option>
         </select>
-        <button id="zoomIn" class="icon-button" type="button" title="Zoom in" aria-label="Zoom in">+</button>
+        <button id="zoomIn" class="icon-button" type="button" title="Zoom in" aria-label="Zoom in">
+          <svg class="icon" width="16" height="16"><use href="#icon-zoom-in"/></svg>
+        </button>
       </div>
       <div class="toolbar-group toolbar-find">
         <input id="findInput" type="search" placeholder="Find" title="Find in document" aria-label="Find in document">
-        <button id="findPrevious" class="icon-button" type="button" title="Previous match" aria-label="Previous match">Prev</button>
-        <button id="findNext" class="icon-button" type="button" title="Next match" aria-label="Next match">Next</button>
+        <button id="findPrevious" class="icon-button" type="button" title="Previous match" aria-label="Previous match">
+          <svg class="icon" width="16" height="16"><use href="#icon-chevron-up"/></svg>
+          <span class="label">Prev</span>
+        </button>
+        <button id="findNext" class="icon-button" type="button" title="Next match" aria-label="Next match">
+          <svg class="icon" width="16" height="16"><use href="#icon-chevron-down"/></svg>
+          <span class="label">Next</span>
+        </button>
         <span id="findStatus" aria-live="polite"></span>
       </div>
       <div class="toolbar-group toolbar-spacer"></div>
       <div class="toolbar-group">
-        <button id="outlineToggle" type="button" title="Toggle document outline" disabled>Outline</button>
-        <button id="print" type="button" title="Print PDF">Print</button>
-        <button id="reload" type="button" title="Refresh PDF">Refresh</button>
-        <button id="openSource" type="button" title="Open raw PDF source with VS Code's default editor">Source</button>
+        <button id="themeToggle" class="icon-button" type="button" title="Switch PDF page mode to Night" aria-label="Switch PDF page mode to Night" aria-pressed="false">
+          <svg class="icon" width="16" height="16"><use href="#icon-theme"/></svg>
+          <span class="label">Clear</span>
+        </button>
+        <button id="outlineToggle" class="icon-button" type="button" title="Toggle document outline" aria-label="Toggle document outline" disabled>
+          <svg class="icon" width="16" height="16"><use href="#icon-list-tree"/></svg>
+          <span class="label">Outline</span>
+        </button>
+        <button id="print" class="icon-button" type="button" title="Print PDF" aria-label="Print PDF">
+          <svg class="icon" width="16" height="16"><use href="#icon-printer"/></svg>
+          <span class="label">Print</span>
+        </button>
+        <button id="reload" class="icon-button" type="button" title="Refresh PDF" aria-label="Refresh PDF">
+          <svg class="icon" width="16" height="16"><use href="#icon-refresh"/></svg>
+          <span class="label">Refresh</span>
+        </button>
+        <button id="openSource" class="icon-button" type="button" title="Open PDF with system viewer" aria-label="Open PDF with system viewer">
+          <svg class="icon" width="16" height="16"><use href="#icon-external-link"/></svg>
+          <span class="label">External</span>
+        </button>
       </div>
       <span id="status" role="status" aria-live="polite"></span>
     </header>
@@ -124,6 +204,14 @@ export class PdfPreview extends Disposable {
           void this.openSource();
         } else if (parsedMessage.type === 'open-external') {
           void this.openExternal();
+        } else if (parsedMessage.type === 'appearance-theme') {
+          void vscode.workspace
+            .getConfiguration('pdf-preview')
+            .update(
+              'appearance.theme',
+              parsedMessage.theme,
+              vscode.ConfigurationTarget.Global,
+            );
         } else if (parsedMessage.type === 'viewer-ready') {
           this.onViewerEvent({
             ...parsedMessage,
@@ -178,15 +266,8 @@ export class PdfPreview extends Disposable {
     this.webviewEditor.webview.html = this.getWebviewContents();
   }
 
-  public async openSource(
-    viewColumn: vscode.ViewColumn | undefined = this.webviewEditor.viewColumn,
-  ): Promise<void> {
-    await vscode.commands.executeCommand(
-      'vscode.openWith',
-      this.resource,
-      'default',
-      viewColumn,
-    );
+  public async openSource(): Promise<void> {
+    await this.openExternal();
   }
 
   public async openExternal(): Promise<void> {

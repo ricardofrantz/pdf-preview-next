@@ -43,27 +43,43 @@ execution disabled.
 - `pdf-preview.appearance.theme`
 - `pdf-preview.appearance.pageGap`
 
+Example dark page rendering:
+
+```json
+"pdf-preview.appearance.theme": "night"
+```
+
+`dark` uses dark viewer chrome while leaving PDF pages unchanged.
+`night` asks PDF.js to recolor rendered PDF pages for lower-eye-strain reading.
+`reader` is reserved for a smarter color-preserving reader mode and currently
+uses the same safe rendering path as `night`.
+`dark-pages` is kept as a compatibility alias for `night`.
+`inverted` remains available for scanned or image-heavy PDFs.
+
 ## Commands And Controls
 
 - `vscode-pdf Next: Open Preview` opens a PDF with this viewer.
-- `vscode-pdf Next: Open Source` opens the active PDF preview as raw source.
+- `vscode-pdf Next: Open Externally` opens the active PDF preview with the
+  system PDF handler.
 - `vscode-pdf Next: Refresh Preview` refreshes the active PDF preview.
 - `vscode-pdf Next: Print` prints the active PDF preview.
-- The toolbar `Source` button opens the raw PDF with VS Code's default editor.
+- The toolbar `External` button opens the PDF with the system PDF handler.
+- The toolbar page-mode button cycles through `Clear`, `Night`, `Reader`, and
+  `Invert`, and keeps that choice for refreshes and newly opened PDFs.
 - The toolbar `Outline` button shows PDF bookmarks when the document provides
   an outline.
 - The toolbar `Refresh` button and `Ctrl+R` / `Cmd+R` refresh the current PDF
   without losing the current page, zoom, scroll, or outline-sidebar state.
 - The toolbar `Print` button uses the webview print path when VS Code exposes
-  it. If the print dialog is unavailable, open the PDF externally or through
-  `Source` and print from the system PDF viewer.
+  it. If the print dialog is unavailable, open the PDF externally and print from
+  the system PDF viewer.
 - Inside the viewer, `j/k/h/l` scroll, `n/p` or `./,` move pages, `g/G` jump to
   first/last page, and `+/-` zoom.
 
 ## Upstream Gaps
 
 The fork now covers the practical upstream requests for newer PDF.js, live
-reload, raw source access, outline/bookmark navigation, per-PDF view-state
+reload, external PDF access, outline/bookmark navigation, per-PDF view-state
 restore, temporary delete/recreate build workflows, debounced refresh, printing
 entry points, appearance controls, text selection/copy polish, and keyboard
 navigation. PDF editing, persistent annotations, delete-pages support, and a
@@ -76,7 +92,7 @@ Install the VSIX from the GitHub release, or from the VS Code Marketplace once
 the publisher token is configured:
 
 ```bash
-code --install-extension pdf-preview-next-1.4.6.vsix --force
+code --install-extension pdf-preview-next-1.5.0.vsix --force
 ```
 
 To make VS Code use this viewer for PDFs:

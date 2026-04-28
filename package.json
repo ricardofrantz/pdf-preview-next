@@ -2,7 +2,7 @@
   "name": "pdf-preview-next",
   "displayName": "vscode-pdf Next",
   "description": "Modern successor to vscode-pdf: fast, secure PDF viewing in VS Code with PDF.js 5, live reload, search, outline, dark modes, and reliable preview state.",
-  "version": "1.4.6",
+  "version": "1.5.0",
   "publisher": "ricardofrantz",
   "engines": {
     "vscode": "^1.95.0",
@@ -60,7 +60,7 @@
       },
       {
         "command": "pdf-preview.openSource",
-        "title": "vscode-pdf Next: Open Source"
+        "title": "vscode-pdf Next: Open Externally"
       },
       {
         "command": "pdf-preview.refreshPreview",
@@ -128,13 +128,16 @@
           "maximum": 10000
         },
         "pdf-preview.appearance.theme": {
-          "markdownDescription": "Preview appearance. `auto` follows VS Code colors, `dark` darkens chrome, and `inverted` also inverts rendered PDF pages.",
+          "markdownDescription": "Preview appearance. `auto` follows VS Code colors for viewer chrome, `dark` uses dark viewer chrome while leaving PDF pages unchanged, `night` asks PDF.js to recolor rendered PDF pages for lower-eye-strain reading, `reader` is reserved for a smarter color-preserving reader mode and currently uses the safe night rendering path, `dark-pages` is a compatibility alias for `night`, and `inverted` applies full-page CSS inversion as a fallback for scanned or image-heavy PDFs.",
           "type": "string",
           "default": "auto",
           "enum": [
             "auto",
             "light",
             "dark",
+            "night",
+            "reader",
+            "dark-pages",
             "inverted"
           ]
         },
