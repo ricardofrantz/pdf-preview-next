@@ -1,10 +1,15 @@
 import * as vscode from 'vscode';
-import { PdfPreview } from './pdfPreview';
+import { PdfPreview, type ViewerEvent } from './pdfPreview';
+
+export type RecordedViewerEvent = ViewerEvent & { receivedAt: number };
 
 export class PdfCustomProvider implements vscode.CustomReadonlyEditorProvider {
   public static readonly viewType = 'pdf-preview-next.preview';
 
   private activePreview: PdfPreview | undefined;
+  private lastViewerEvent: RecordedViewerEvent | undefined;
+  private readonly viewerEventEmitter =
+    new vscode.EventEmitter<RecordedViewerEvent>();
 
   constructor(
     private readonly extensionRoot: vscode.Uri,
@@ -24,6 +29,9 @@ export class PdfCustomProvider implements vscode.CustomReadonlyEditorProvider {
       document.uri,
       webviewEditor,
       this.workspaceState,
+      (event) => {
+        this.recordViewerEvent(event);
+      },
     );
     const updateActivePreview = (): void => {
       if (webviewEditor.active) {
@@ -74,5 +82,39 @@ export class PdfCustomProvider implements vscode.CustomReadonlyEditorProvider {
     }
 
     this.activePreview.print();
+  }
+
+  public waitForViewerEvent(
+    resource: string,
+    timeoutMs = 15000,
+  ): Promise<RecordedViewerEvent> {
+    if (this.lastViewerEvent?.resource === resource) {
+      return Promise.resolve(this.lastViewerEvent);
+    }
+
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        subscription.dispose();
+        reject(
+          new Error(`Timed out waiting for PDF preview event: ${resource}`),
+        );
+      }, timeoutMs);
+
+      const subscription = this.viewerEventEmitter.event((event) => {
+        if (event.resource !== resource) {
+          return;
+        }
+
+        clearTimeout(timeout);
+        subscription.dispose();
+        resolve(event);
+      });
+    });
+  }
+
+  private recordViewerEvent(event: ViewerEvent): void {
+    const recorded = { ...event, receivedAt: Date.now() };
+    this.lastViewerEvent = recorded;
+    this.viewerEventEmitter.fire(recorded);
   }
 }

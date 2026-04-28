@@ -12,6 +12,13 @@
 - Use an absolutely positioned `div` for the PDF.js viewer container, matching
   the PDF.js 5 constructor contract and avoiding container validation startup
   failures.
+- Polyfill `Map.prototype.getOrInsertComputed` and
+  `WeakMap.prototype.getOrInsertComputed` (TC39 Stage 3 "Upsert" proposal) in
+  `lib/polyfills.mjs`, imported before PDF.js. PDF.js 5.6.205 calls these
+  methods during the first PDF render, but the V8 inside current VS Code
+  Electron builds does not yet expose them; without the polyfill the
+  toolbar status reports `Could not load PDF: this[#fr].getOrInsertComputed
+  is not a function`.
 - Keep the local webview PDF data loading path from 1.4.5 and remove temporary
   diagnostic banner/logging instrumentation.
 

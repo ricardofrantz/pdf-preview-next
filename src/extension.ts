@@ -11,6 +11,16 @@ export function activate(context: vscode.ExtensionContext): void {
     context.extensionUri,
     context.workspaceState,
   );
+  if (context.extensionMode === vscode.ExtensionMode.Test) {
+    context.subscriptions.push(
+      vscode.commands.registerCommand(
+        'pdf-preview.internal.waitForViewerEvent',
+        async (resource: string, timeoutMs?: number) =>
+          provider.waitForViewerEvent(resource, timeoutMs),
+      ),
+    );
+  }
+
   context.subscriptions.push(
     vscode.window.registerCustomEditorProvider(
       PdfCustomProvider.viewType,

@@ -15,10 +15,21 @@ interface PersistedViewState {
   outlineVisible?: boolean;
 }
 
+export type ViewerEvent =
+  | {
+      type: 'viewer-ready';
+      resource: string;
+      pagesCount: number;
+      pageNumber: number;
+    }
+  | { type: 'viewer-error'; resource: string; message: string };
+
 type WebviewMessage =
   | { type: 'open-external' }
   | { type: 'open-source' }
-  | { type: 'view-state'; state: PersistedViewState };
+  | { type: 'view-state'; state: PersistedViewState }
+  | { type: 'viewer-ready'; pagesCount: number; pageNumber: number }
+  | { type: 'viewer-error'; message: string };
 
 const DEFAULT_RELOAD_DEBOUNCE_MS = 800;
 
@@ -84,6 +95,31 @@ function getWebviewMessage(message: unknown): WebviewMessage | undefined {
     isPersistedViewState(message.state)
   ) {
     return { type: 'view-state', state: message.state };
+  }
+
+  if (
+    hasExpectedKeys(message, ['type', 'pagesCount', 'pageNumber']) &&
+    message.type === 'viewer-ready' &&
+    typeof message.pagesCount === 'number' &&
+    Number.isInteger(message.pagesCount) &&
+    message.pagesCount > 0 &&
+    typeof message.pageNumber === 'number' &&
+    Number.isInteger(message.pageNumber) &&
+    message.pageNumber > 0
+  ) {
+    return {
+      type: 'viewer-ready',
+      pagesCount: message.pagesCount,
+      pageNumber: message.pageNumber,
+    };
+  }
+
+  if (
+    hasExpectedKeys(message, ['type', 'message']) &&
+    message.type === 'viewer-error' &&
+    typeof message.message === 'string'
+  ) {
+    return { type: 'viewer-error', message: message.message };
   }
 
   return undefined;
@@ -184,6 +220,7 @@ export class PdfPreview extends Disposable {
     private readonly resource: vscode.Uri,
     private readonly webviewEditor: vscode.WebviewPanel,
     private readonly workspaceState: vscode.Memento,
+    private readonly onViewerEvent: (event: ViewerEvent) => void = () => {},
   ) {
     super();
     const documentRoot = vscode.Uri.joinPath(resource, '..');
@@ -206,6 +243,16 @@ export class PdfPreview extends Disposable {
           void this.openSource();
         } else if (parsedMessage.type === 'open-external') {
           void this.openExternal();
+        } else if (parsedMessage.type === 'viewer-ready') {
+          this.onViewerEvent({
+            ...parsedMessage,
+            resource: this.resource.toString(),
+          });
+        } else if (parsedMessage.type === 'viewer-error') {
+          this.onViewerEvent({
+            ...parsedMessage,
+            resource: this.resource.toString(),
+          });
         } else {
           void this.workspaceState.update(
             viewStateKey(this.resource),
