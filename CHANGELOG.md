@@ -2,12 +2,24 @@
 
 ## Unreleased
 
-## 1.4.5 (2026/04/27)
+## 1.4.6 (2026/04/28)
+
+- Fix the preview bootstrap race where the async PDF.js viewer module could
+  finish evaluating after `DOMContentLoaded` had already fired, leaving the
+  panel blank.
+- Start the viewer immediately when the document is already ready, while still
+  using the `DOMContentLoaded` listener for early-loading webviews.
+- Keep the local webview PDF data loading path from 1.4.5 and remove temporary
+  diagnostic banner/logging instrumentation.
+
+## 1.4.5 (2026/04/27) - superseded by 1.4.6
 
 - Read the opened PDF through the webview frame and pass `Uint8Array` data to
   PDF.js, bypassing range/stream loading against VS Code webview-resource URLs
   that could leave the viewer stuck at `of 0`.
 - Disable PDF.js range and streaming modes for local webview resources.
+- This release was superseded because the async module loader could miss
+  `DOMContentLoaded` and still leave the preview blank.
 
 ## 1.4.4 (2026/04/27)
 
