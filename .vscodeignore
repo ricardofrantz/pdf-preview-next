@@ -9,7 +9,9 @@ out/test/**
 out/src/test/**
 test/**
 src/**
+src/test/fixtures/**
 **/*.map
+**/*.ts
 .gitignore
 .nvmrc
 .prettierrc.json
@@ -17,6 +19,9 @@ tsconfig.json
 eslint.config.mjs
 package-lock.json
 tools/**
+scratch/**
+tmp/**
+temp/**
 vsc-extension-quickstart.md
 plan.md
 plan_*.md
