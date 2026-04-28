@@ -245,6 +245,13 @@ export function renderPdfPreviewHtml({
   return head + PDF_VIEWER_BODY + '</html>';
 }
 
+export function webviewLocalResourceRoots(
+  extensionRoot: vscode.Uri,
+  resource: vscode.Uri,
+): vscode.Uri[] {
+  return [extensionRoot, vscode.Uri.joinPath(resource, '..')];
+}
+
 export class PdfPreview extends Disposable {
   private reloadTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -256,13 +263,12 @@ export class PdfPreview extends Disposable {
     private readonly onViewerEvent: (event: ViewerEvent) => void = () => {},
   ) {
     super();
-    const documentRoot = vscode.Uri.joinPath(resource, '..');
     const config = vscode.workspace.getConfiguration('pdf-preview');
     const closeOnDelete = config.get<boolean>('reload.closeOnDelete', false);
 
     webviewEditor.webview.options = {
       enableScripts: true,
-      localResourceRoots: [extensionRoot, documentRoot],
+      localResourceRoots: webviewLocalResourceRoots(extensionRoot, resource),
     };
 
     this._register(

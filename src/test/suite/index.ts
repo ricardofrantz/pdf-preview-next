@@ -1,7 +1,11 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { PDF_WEBVIEW_OPTIONS } from '../../extension';
-import { PDF_VIEWER_BODY, renderPdfPreviewHtml } from '../../pdfPreview';
+import {
+  PDF_VIEWER_BODY,
+  renderPdfPreviewHtml,
+  webviewLocalResourceRoots,
+} from '../../pdfPreview';
 import {
   parseViewerToHostMessage,
   persistedViewStateOrUndefined,
@@ -113,6 +117,15 @@ function assertWebviewContract(): void {
 }
 
 function assertWebviewHtmlHooks(): void {
+  const extensionRoot = vscode.Uri.parse('file:///extension');
+  const resource = vscode.Uri.parse('file:///workspace/docs/paper.pdf');
+  assert.deepStrictEqual(
+    webviewLocalResourceRoots(extensionRoot, resource).map((uri) =>
+      uri.toString(),
+    ),
+    ['file:///extension', 'file:///workspace/docs'],
+  );
+
   assert.match(
     PDF_VIEWER_BODY,
     /<button id="themeToggle"[^>]*>[\s\S]*?<span class="label">Clear<\/span>/,
@@ -120,7 +133,7 @@ function assertWebviewHtmlHooks(): void {
   );
 
   const html = renderPdfPreviewHtml({
-    csp: "default-src 'none'; script-src 'nonce-fixed' vscode-resource:",
+    csp: "default-src 'none'; script-src 'nonce-fixed' vscode-resource:; style-src 'unsafe-inline' vscode-resource:",
     nonce: 'fixed',
     config: {
       path: 'vscode-resource://document.pdf',
@@ -133,8 +146,10 @@ function assertWebviewHtmlHooks(): void {
 
   assert.match(
     html,
-    /<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-fixed' vscode-resource:">/,
+    /<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-fixed' vscode-resource:; style-src 'unsafe-inline' vscode-resource:">/,
   );
+  assert.doesNotMatch(html, /script-src[^;"]*unsafe-inline/);
+  assert.match(html, /style-src 'unsafe-inline'/);
   assert.match(html, /<script nonce="fixed">/);
   assert.match(
     html,
@@ -238,16 +253,55 @@ export async function run(): Promise<void> {
     'dark-pages',
     'inverted',
   ]);
+  const configurationProperties =
+    extension.packageJSON.contributes.configuration.properties;
+  const resourceScopedSettings = [
+    'pdf-preview.default.cursor',
+    'pdf-preview.default.scale',
+    'pdf-preview.default.sidebar',
+    'pdf-preview.default.scrollMode',
+    'pdf-preview.default.spreadMode',
+    'pdf-preview.appearance.theme',
+    'pdf-preview.appearance.pageGap',
+  ];
+  for (const setting of resourceScopedSettings) {
+    assert.strictEqual(
+      configurationProperties[setting].scope,
+      'resource',
+      `${setting} should support resource-scoped overrides.`,
+    );
+  }
+  assert.deepStrictEqual(
+    Object.fromEntries(
+      Object.entries(configurationProperties).map(([key, value]) => [
+        key,
+        (value as { default: unknown }).default,
+      ]),
+    ),
+    {
+      'pdf-preview.default.cursor': 'select',
+      'pdf-preview.default.scale': 'auto',
+      'pdf-preview.default.sidebar': false,
+      'pdf-preview.default.scrollMode': 'vertical',
+      'pdf-preview.default.spreadMode': 'none',
+      'pdf-preview.reload.closeOnDelete': false,
+      'pdf-preview.reload.debounceMs': 800,
+      'pdf-preview.appearance.theme': 'auto',
+      'pdf-preview.appearance.pageGap': 'normal',
+    },
+  );
 
   const commandIds = new Set(
     extension.packageJSON.contributes.commands.map(
       ({ command }: { command: string }) => command,
     ),
   );
-  assert.ok(commandIds.has('pdf-preview.openPreview'));
-  assert.ok(commandIds.has('pdf-preview.openSource'));
-  assert.ok(commandIds.has('pdf-preview.refreshPreview'));
-  assert.ok(commandIds.has('pdf-preview.print'));
+  assert.deepStrictEqual([...commandIds].sort(), [
+    'pdf-preview.openPreview',
+    'pdf-preview.openSource',
+    'pdf-preview.print',
+    'pdf-preview.refreshPreview',
+  ]);
   const commandTitles = new Map(
     extension.packageJSON.contributes.commands.map(
       ({ command, title }: { command: string; title: string }) => [

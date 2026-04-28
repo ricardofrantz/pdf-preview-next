@@ -78,6 +78,7 @@
         "pdf-preview.default.cursor": {
           "markdownDescription": "The default cursor tool for preview.",
           "type": "string",
+          "scope": "resource",
           "default": "select",
           "enum": [
             "select",
@@ -87,17 +88,20 @@
         "pdf-preview.default.scale": {
           "markdownDescription": "The default zoom level for preview. Allowed values are `auto`, `page-actual`, `page-fit`, `page-width`, and 1-based scale values. (`1.0` means 100%)",
           "type": "string",
+          "scope": "resource",
           "default": "auto",
           "pattern": "^(\\d+(?:\\.\\d+)?|auto|page-actual|page-fit|page-width)$"
         },
         "pdf-preview.default.sidebar": {
           "markdownDescription": "Open the document outline sidebar by default when the PDF has an outline.",
           "type": "boolean",
+          "scope": "resource",
           "default": false
         },
         "pdf-preview.default.scrollMode": {
           "markdownDescription": "The default scroll mode for preview.",
           "type": "string",
+          "scope": "resource",
           "default": "vertical",
           "enum": [
             "vertical",
@@ -108,6 +112,7 @@
         "pdf-preview.default.spreadMode": {
           "markdownDescription": "The default spread mode for preview.",
           "type": "string",
+          "scope": "resource",
           "default": "none",
           "enum": [
             "none",
@@ -130,6 +135,7 @@
         "pdf-preview.appearance.theme": {
           "markdownDescription": "Preview appearance. `auto` follows VS Code colors for viewer chrome, `dark` uses dark viewer chrome while leaving PDF pages unchanged, `night` asks PDF.js to recolor rendered PDF pages for lower-eye-strain reading, `reader` is reserved for a smarter color-preserving reader mode and currently uses the safe night rendering path, `dark-pages` is a compatibility alias for `night`, and `inverted` applies full-page CSS inversion as a fallback for scanned or image-heavy PDFs.",
           "type": "string",
+          "scope": "resource",
           "default": "auto",
           "enum": [
             "auto",
@@ -144,6 +150,7 @@
         "pdf-preview.appearance.pageGap": {
           "markdownDescription": "Spacing between rendered PDF pages.",
           "type": "string",
+          "scope": "resource",
           "default": "normal",
           "enum": [
             "compact",
