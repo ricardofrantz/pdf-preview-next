@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 1.6.0 (2026/04/28)
+
+- Add checked-in regression fixtures for outline, password-protected, and
+  intentionally broken PDFs.
+- Mark PDF defaults and appearance settings as resource-scoped and read them
+  with the opened PDF as the VS Code configuration scope.
+- Add `PDF Preview Next: Reset View State`, clearing only the active PDF's
+  saved page, zoom, scroll, and outline-sidebar state.
+- Add contributed-surface tests for command IDs, setting defaults, resource
+  scopes, webview resource roots, and nonce-bound CSP behavior.
+- Harden VSIX packaging hygiene so source files, plans, scratch directories,
+  and test fixtures stay out of release packages.
+
 ## 1.5.0 (2026/04/28)
 
 - Add `night` to `pdf-preview.appearance.theme`, using PDF.js page recoloring

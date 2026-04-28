@@ -33,15 +33,20 @@ execution disabled.
 
 ## Settings
 
-- `pdf-preview.default.cursor`
-- `pdf-preview.default.scale`
-- `pdf-preview.default.sidebar`
-- `pdf-preview.default.scrollMode`
-- `pdf-preview.default.spreadMode`
+- `pdf-preview.default.cursor` (resource-scoped)
+- `pdf-preview.default.scale` (resource-scoped)
+- `pdf-preview.default.sidebar` (resource-scoped)
+- `pdf-preview.default.scrollMode` (resource-scoped)
+- `pdf-preview.default.spreadMode` (resource-scoped)
 - `pdf-preview.reload.closeOnDelete`
 - `pdf-preview.reload.debounceMs`
-- `pdf-preview.appearance.theme`
-- `pdf-preview.appearance.pageGap`
+- `pdf-preview.appearance.theme` (resource-scoped)
+- `pdf-preview.appearance.pageGap` (resource-scoped)
+
+Resource-scoped settings can be overridden per workspace folder or PDF resource
+where VS Code supports resource configuration. Reload settings remain global
+because they control file-watcher behavior rather than document rendering
+defaults.
 
 Example dark page rendering:
 
@@ -63,6 +68,8 @@ uses the same safe rendering path as `night`.
   system PDF handler.
 - `vscode-pdf Next: Refresh Preview` refreshes the active PDF preview.
 - `vscode-pdf Next: Print` prints the active PDF preview.
+- `PDF Preview Next: Reset View State` clears the saved page, zoom, scroll, and
+  outline-sidebar state for the active PDF only.
 - The toolbar `External` button opens the PDF with the system PDF handler.
 - The toolbar page-mode button cycles through `Clear`, `Night`, `Reader`, and
   `Invert`, and keeps that choice for refreshes and newly opened PDFs.
@@ -92,7 +99,7 @@ Install the VSIX from the GitHub release, or from the VS Code Marketplace once
 the publisher token is configured:
 
 ```bash
-code --install-extension pdf-preview-next-1.5.0.vsix --force
+code --install-extension pdf-preview-next-1.6.0.vsix --force
 ```
 
 To make VS Code use this viewer for PDFs:
