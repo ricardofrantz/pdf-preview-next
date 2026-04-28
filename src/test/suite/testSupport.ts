@@ -1,0 +1,151 @@
+import * as assert from 'assert';
+import { pathToFileURL } from 'url';
+import * as vscode from 'vscode';
+import type { ViewerEvent } from '../../webviewContract';
+
+export type RecordedViewerEvent = ViewerEvent & { receivedAt: number };
+
+type UpsertMap<K, V> = Map<K, V> & {
+  getOrInsertComputed(key: K, callbackFn: (key: K) => V): V;
+};
+
+type UpsertWeakMap<K extends object, V> = WeakMap<K, V> & {
+  getOrInsertComputed(key: K, callbackFn: (key: K) => V): V;
+};
+
+export async function readExtensionFile(
+  extension: vscode.Extension<unknown>,
+  ...parts: string[]
+): Promise<string> {
+  const data = await vscode.workspace.fs.readFile(
+    vscode.Uri.joinPath(extension.extensionUri, ...parts),
+  );
+  return Buffer.from(data).toString('utf8');
+}
+
+function minimalPdf(): Uint8Array {
+  const stream = 'BT\n/F1 24 Tf\n72 720 Td\n(PDF Preview Next) Tj\nET\n';
+  const objects = [
+    '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n',
+    '2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n',
+    [
+      '3 0 obj\n',
+      '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] ',
+      '/Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>\n',
+      'endobj\n',
+    ].join(''),
+    [
+      '4 0 obj\n',
+      `<< /Length ${Buffer.byteLength(stream, 'latin1')} >>\n`,
+      'stream\n',
+      stream,
+      'endstream\n',
+      'endobj\n',
+    ].join(''),
+    '5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n',
+  ];
+
+  let pdf = '%PDF-1.4\n';
+  const offsets = [0];
+  for (const object of objects) {
+    offsets.push(Buffer.byteLength(pdf, 'latin1'));
+    pdf += object;
+  }
+
+  const xrefOffset = Buffer.byteLength(pdf, 'latin1');
+  pdf += `xref\n0 ${objects.length + 1}\n`;
+  pdf += '0000000000 65535 f \n';
+  for (let index = 1; index <= objects.length; index += 1) {
+    pdf += `${String(offsets[index]).padStart(10, '0')} 00000 n \n`;
+  }
+  pdf += [
+    'trailer\n',
+    `<< /Size ${objects.length + 1} /Root 1 0 R >>\n`,
+    'startxref\n',
+    `${xrefOffset}\n`,
+    '%%EOF\n',
+  ].join('');
+
+  return Buffer.from(pdf, 'latin1');
+}
+
+export async function writePdfFixture(
+  extension: vscode.Extension<unknown>,
+): Promise<vscode.Uri> {
+  const fixtureDir = vscode.Uri.joinPath(
+    extension.extensionUri,
+    '.work',
+    'test-fixtures',
+  );
+  await vscode.workspace.fs.createDirectory(fixtureDir);
+  const fixtureUri = vscode.Uri.joinPath(fixtureDir, 'minimal.pdf');
+  await vscode.workspace.fs.writeFile(fixtureUri, minimalPdf());
+  return fixtureUri;
+}
+
+export async function assertPolyfillsWork(
+  extension: vscode.Extension<unknown>,
+): Promise<void> {
+  await import(
+    pathToFileURL(
+      vscode.Uri.joinPath(extension.extensionUri, 'lib', 'polyfills.mjs')
+        .fsPath,
+    ).href
+  );
+
+  const map = new Map<string, number>() as UpsertMap<string, number>;
+  let mapCalls = 0;
+  assert.strictEqual(
+    map.getOrInsertComputed('page', () => {
+      mapCalls += 1;
+      return 1;
+    }),
+    1,
+  );
+  assert.strictEqual(
+    map.getOrInsertComputed('page', () => {
+      mapCalls += 1;
+      return 2;
+    }),
+    1,
+  );
+  assert.strictEqual(mapCalls, 1);
+  assert.strictEqual(map.get('page'), 1);
+
+  const weakMap = new WeakMap<object, string>() as UpsertWeakMap<
+    object,
+    string
+  >;
+  const key = {};
+  let weakMapCalls = 0;
+  assert.strictEqual(
+    weakMap.getOrInsertComputed(key, () => {
+      weakMapCalls += 1;
+      return 'ready';
+    }),
+    'ready',
+  );
+  assert.strictEqual(
+    weakMap.getOrInsertComputed(key, () => {
+      weakMapCalls += 1;
+      return 'stale';
+    }),
+    'ready',
+  );
+  assert.strictEqual(weakMapCalls, 1);
+  assert.strictEqual(weakMap.get(key), 'ready');
+  assert.strictEqual(
+    Object.prototype.propertyIsEnumerable.call(
+      Map.prototype,
+      'getOrInsertComputed',
+    ),
+    false,
+  );
+  assert.strictEqual(
+    Object.prototype.propertyIsEnumerable.call(
+      WeakMap.prototype,
+      'getOrInsertComputed',
+    ),
+    false,
+  );
+}
