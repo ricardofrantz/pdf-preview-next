@@ -10,6 +10,7 @@ body {
   font-family: var(--vscode-font-family);
   font-size: var(--vscode-font-size);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 button,
@@ -42,7 +43,7 @@ button {
   transition:
     background-color 120ms ease,
     opacity 120ms ease,
-    transform 120ms ease;
+    transform 120ms cubic-bezier(0.2, 0, 0, 1);
   touch-action: manipulation;
 }
 
@@ -223,7 +224,6 @@ body.theme-inverted {
   overflow: auto;
   border-right: 1px solid var(--vscode-panel-border);
   background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-  box-shadow: 1px 0 0 rgba(255, 255, 255, 0.04);
 }
 
 .outline-header {
@@ -438,6 +438,8 @@ body.theme-inverted .textLayer .highlight.selected {
   justify-content: center;
   background: rgb(0 0 0 / 0.35);
   z-index: 10;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 .hidden {
@@ -448,11 +450,12 @@ body.theme-inverted .textLayer .highlight.selected {
   width: min(360px, calc(100% - 32px));
   padding: 16px;
   border: 1px solid var(--vscode-panel-border);
-  border-radius: 4px;
+  border-radius: 8px;
   background: var(--vscode-editor-background);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.24);
+  box-shadow:
+    0 8px 32px rgb(0 0 0 / 0.32),
+    0 0 0 1px rgb(255 255 255 / 0.05);
 }
-
 .password-panel h1 {
   margin: 0 0 8px;
   font-size: 16px;
@@ -466,14 +469,19 @@ body.theme-inverted .textLayer .highlight.selected {
 
 #passwordInput {
   width: 100%;
-  padding: 0 6px;
+  padding: 0 8px;
+  border-radius: 6px;
 }
 
 .password-actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 16px;
+}
+
+.password-actions button {
+  border-radius: 6px;
 }
 
 @media print {

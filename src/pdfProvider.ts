@@ -53,50 +53,24 @@ export class PdfCustomProvider implements vscode.CustomReadonlyEditorProvider {
   }
 
   public async openSourceForActivePreview(): Promise<void> {
-    if (!this.activePreview) {
-      await vscode.window.showInformationMessage(
-        'Open a PDF Preview Next tab first.',
-      );
-      return;
-    }
-
-    await this.activePreview.openSource();
+    await this.withActivePreview((preview) => preview.openSource());
   }
 
   public async refreshActivePreview(): Promise<void> {
-    if (!this.activePreview) {
-      await vscode.window.showInformationMessage(
-        'Open a PDF Preview Next tab first.',
-      );
-      return;
-    }
-
-    this.activePreview.refresh();
+    await this.withActivePreview((preview) => preview.refresh());
   }
 
   public async printActivePreview(): Promise<void> {
-    if (!this.activePreview) {
-      await vscode.window.showInformationMessage(
-        'Open a PDF Preview Next tab first.',
-      );
-      return;
-    }
-
-    this.activePreview.print();
+    await this.withActivePreview((preview) => preview.print());
   }
 
   public async resetViewStateForActivePreview(): Promise<void> {
-    if (!this.activePreview) {
+    await this.withActivePreview(async (preview) => {
+      await preview.resetViewState();
       await vscode.window.showInformationMessage(
-        'Open a PDF Preview Next tab first.',
+        'Reset view state for the current PDF.',
       );
-      return;
-    }
-
-    await this.activePreview.resetViewState();
-    await vscode.window.showInformationMessage(
-      'Reset view state for the current PDF.',
-    );
+    });
   }
 
   public waitForViewerEvent(
@@ -125,6 +99,19 @@ export class PdfCustomProvider implements vscode.CustomReadonlyEditorProvider {
         resolve(event);
       });
     });
+  }
+
+  private async withActivePreview(
+    fn: (preview: PdfPreview) => Promise<void> | void,
+  ): Promise<void> {
+    if (!this.activePreview) {
+      await vscode.window.showInformationMessage(
+        'Open a PDF Preview Next tab first.',
+      );
+      return;
+    }
+
+    await fn(this.activePreview);
   }
 
   private recordViewerEvent(event: ViewerEvent): void {

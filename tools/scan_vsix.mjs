@@ -12,7 +12,7 @@ const forbiddenEntries = [
   /^extension\/test\//,
   /^extension\/tools\//,
   /^extension\/node_modules\//,
-  /(^|\/)(?:plan(?:_[^/]*)?|PLAN|GEMINI|AGENTS|CLAUDE|SECURITY)\.md$/i,
+  /(^|\/)(?:plan(?:_[^/]*)?|PLAN|GEMINI|KIMI|AGENTS|CLAUDE|SECURITY)\.md$/i,
   /(^|\/)(?:scratch|tmp|temp)(?:\.|\/)/i,
   /(^|\/)debugger\.(?:js|css)$/i,
   /\.map$/i,

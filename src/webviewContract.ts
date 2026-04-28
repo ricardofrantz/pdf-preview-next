@@ -41,7 +41,7 @@ export type ViewerEvent =
   | { type: 'viewer-error'; resource: string; message: string };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && typeof value === 'object' && !Array.isArray(value);
+  return Object.prototype.toString.call(value) === '[object Object]';
 }
 
 function hasExpectedKeys(
@@ -49,12 +49,19 @@ function hasExpectedKeys(
   requiredKeys: string[],
   optionalKeys: string[] = [],
 ): boolean {
-  const keys = Object.keys(value);
-  const allowedKeys = new Set([...requiredKeys, ...optionalKeys]);
-  return (
-    requiredKeys.every((key) => keys.includes(key)) &&
-    keys.every((key) => allowedKeys.has(key))
-  );
+  for (const key of requiredKeys) {
+    if (!Object.prototype.hasOwnProperty.call(value, key)) {
+      return false;
+    }
+  }
+
+  for (const key of Object.keys(value)) {
+    if (!requiredKeys.includes(key) && !optionalKeys.includes(key)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 export function isPersistedViewState(
@@ -88,63 +95,74 @@ export function isPersistedViewState(
 export function parseViewerToHostMessage(
   message: unknown,
 ): ViewerToHostMessage | undefined {
-  if (!isRecord(message)) {
+  if (!isRecord(message) || typeof message.type !== 'string') {
     return undefined;
   }
 
-  if (hasExpectedKeys(message, ['type']) && message.type === 'open-source') {
-    return { type: 'open-source' };
-  }
+  switch (message.type) {
+    case 'open-source':
+      if (hasExpectedKeys(message, ['type'])) {
+        return { type: 'open-source' };
+      }
+      break;
 
-  if (hasExpectedKeys(message, ['type']) && message.type === 'open-external') {
-    return { type: 'open-external' };
-  }
+    case 'open-external':
+      if (hasExpectedKeys(message, ['type'])) {
+        return { type: 'open-external' };
+      }
+      break;
 
-  if (
-    hasExpectedKeys(message, ['type', 'theme']) &&
-    message.type === 'appearance-theme' &&
-    (message.theme === 'auto' ||
-      message.theme === 'light' ||
-      message.theme === 'dark' ||
-      message.theme === 'night' ||
-      message.theme === 'reader' ||
-      message.theme === 'dark-pages' ||
-      message.theme === 'inverted')
-  ) {
-    return { type: 'appearance-theme', theme: message.theme };
-  }
+    case 'appearance-theme':
+      if (
+        hasExpectedKeys(message, ['type', 'theme']) &&
+        typeof message.theme === 'string' &&
+        (message.theme === 'auto' ||
+          message.theme === 'light' ||
+          message.theme === 'dark' ||
+          message.theme === 'night' ||
+          message.theme === 'reader' ||
+          message.theme === 'dark-pages' ||
+          message.theme === 'inverted')
+      ) {
+        return { type: 'appearance-theme', theme: message.theme };
+      }
+      break;
 
-  if (
-    hasExpectedKeys(message, ['type', 'state']) &&
-    message.type === 'view-state' &&
-    isPersistedViewState(message.state)
-  ) {
-    return { type: 'view-state', state: message.state };
-  }
+    case 'view-state':
+      if (
+        hasExpectedKeys(message, ['type', 'state']) &&
+        isPersistedViewState(message.state)
+      ) {
+        return { type: 'view-state', state: message.state };
+      }
+      break;
 
-  if (
-    hasExpectedKeys(message, ['type', 'pagesCount', 'pageNumber']) &&
-    message.type === 'viewer-ready' &&
-    typeof message.pagesCount === 'number' &&
-    Number.isInteger(message.pagesCount) &&
-    message.pagesCount > 0 &&
-    typeof message.pageNumber === 'number' &&
-    Number.isInteger(message.pageNumber) &&
-    message.pageNumber > 0
-  ) {
-    return {
-      type: 'viewer-ready',
-      pagesCount: message.pagesCount,
-      pageNumber: message.pageNumber,
-    };
-  }
+    case 'viewer-ready':
+      if (
+        hasExpectedKeys(message, ['type', 'pagesCount', 'pageNumber']) &&
+        typeof message.pagesCount === 'number' &&
+        Number.isInteger(message.pagesCount) &&
+        message.pagesCount > 0 &&
+        typeof message.pageNumber === 'number' &&
+        Number.isInteger(message.pageNumber) &&
+        message.pageNumber > 0
+      ) {
+        return {
+          type: 'viewer-ready',
+          pagesCount: message.pagesCount,
+          pageNumber: message.pageNumber,
+        };
+      }
+      break;
 
-  if (
-    hasExpectedKeys(message, ['type', 'message']) &&
-    message.type === 'viewer-error' &&
-    typeof message.message === 'string'
-  ) {
-    return { type: 'viewer-error', message: message.message };
+    case 'viewer-error':
+      if (
+        hasExpectedKeys(message, ['type', 'message']) &&
+        typeof message.message === 'string'
+      ) {
+        return { type: 'viewer-error', message: message.message };
+      }
+      break;
   }
 
   return undefined;

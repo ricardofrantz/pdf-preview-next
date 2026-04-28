@@ -15,15 +15,21 @@ function createNonce(): string {
 }
 
 const DEFAULT_RELOAD_DEBOUNCE_MS = 800;
+const MAX_RELOAD_DELAY_MS = 5000;
 
-function getReloadDebounceMs(): number {
-  const value = vscode.workspace
-    .getConfiguration('pdf-preview')
-    .get<number>('reload.debounceMs', DEFAULT_RELOAD_DEBOUNCE_MS);
+function normalizedReloadDebounceMs(value: unknown): number {
   if (!Number.isFinite(value)) {
     return DEFAULT_RELOAD_DEBOUNCE_MS;
   }
-  return Math.min(Math.max(Math.trunc(value), 0), 10_000);
+  return Math.min(Math.max(Math.trunc(Number(value)), 0), 10_000);
+}
+
+function readReloadDebounceMs(): number {
+  return normalizedReloadDebounceMs(
+    vscode.workspace
+      .getConfiguration('pdf-preview')
+      .get<number>('reload.debounceMs', DEFAULT_RELOAD_DEBOUNCE_MS),
+  );
 }
 
 export interface PdfPreviewHtmlOptions {
@@ -183,7 +189,12 @@ export const PDF_VIEWER_BODY = `<body>
 </body>`;
 
 function htmlAttributeJson(value: unknown): string {
-  return JSON.stringify(value).replace(/"/g, '&quot;');
+  return JSON.stringify(value)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 export function renderPdfPreviewHtml({
@@ -261,6 +272,8 @@ export async function clearPdfPreviewViewState(
 
 export class PdfPreview extends Disposable {
   private reloadTimer: ReturnType<typeof setTimeout> | undefined;
+  private reloadBurstStartedAt: number | undefined;
+  private reloadDebounceMs = readReloadDebounceMs();
 
   constructor(
     private readonly extensionRoot: vscode.Uri,
@@ -279,39 +292,49 @@ export class PdfPreview extends Disposable {
     };
 
     this._register(
+      vscode.workspace.onDidChangeConfiguration((event) => {
+        if (event.affectsConfiguration('pdf-preview.reload.debounceMs')) {
+          this.reloadDebounceMs = readReloadDebounceMs();
+        }
+      }),
+    );
+
+    this._register(
       webviewEditor.webview.onDidReceiveMessage((message: unknown) => {
         const parsedMessage = parseViewerToHostMessage(message);
         if (!parsedMessage) {
           return;
         }
 
-        if (parsedMessage.type === 'open-source') {
-          void this.openSource();
-        } else if (parsedMessage.type === 'open-external') {
-          void this.openExternal();
-        } else if (parsedMessage.type === 'appearance-theme') {
-          void vscode.workspace
-            .getConfiguration('pdf-preview')
-            .update(
-              'appearance.theme',
-              parsedMessage.theme,
-              vscode.ConfigurationTarget.Global,
+        switch (parsedMessage.type) {
+          case 'open-source':
+            void this.openSource();
+            break;
+          case 'open-external':
+            void this.openExternal();
+            break;
+          case 'appearance-theme':
+            void vscode.workspace
+              .getConfiguration('pdf-preview')
+              .update(
+                'appearance.theme',
+                parsedMessage.theme,
+                vscode.ConfigurationTarget.Global,
+              );
+            break;
+          case 'viewer-ready':
+          case 'viewer-error':
+            this.onViewerEvent({
+              ...parsedMessage,
+              resource: this.resource.toString(),
+            });
+            break;
+          case 'view-state':
+            void this.workspaceState.update(
+              viewStateKey(this.resource),
+              parsedMessage.state,
             );
-        } else if (parsedMessage.type === 'viewer-ready') {
-          this.onViewerEvent({
-            ...parsedMessage,
-            resource: this.resource.toString(),
-          });
-        } else if (parsedMessage.type === 'viewer-error') {
-          this.onViewerEvent({
-            ...parsedMessage,
-            resource: this.resource.toString(),
-          });
-        } else {
-          void this.workspaceState.update(
-            viewStateKey(this.resource),
-            parsedMessage.state,
-          );
+            break;
         }
       }),
     );
@@ -378,17 +401,29 @@ export class PdfPreview extends Disposable {
   }
 
   private scheduleReload(): void {
-    this.clearReloadTimer();
+    const now = Date.now();
+    this.reloadBurstStartedAt ??= now;
+    const elapsedMs = now - this.reloadBurstStartedAt;
+    const delayMs =
+      elapsedMs >= MAX_RELOAD_DELAY_MS
+        ? 0
+        : Math.min(this.reloadDebounceMs, MAX_RELOAD_DELAY_MS - elapsedMs);
+
+    this.clearReloadTimer(false);
     this.reloadTimer = setTimeout(() => {
       this.reloadTimer = undefined;
+      this.reloadBurstStartedAt = undefined;
       this.refresh();
-    }, getReloadDebounceMs());
+    }, delayMs);
   }
 
-  private clearReloadTimer(): void {
+  private clearReloadTimer(resetBurst = true): void {
     if (this.reloadTimer) {
       clearTimeout(this.reloadTimer);
       this.reloadTimer = undefined;
+    }
+    if (resetBurst) {
+      this.reloadBurstStartedAt = undefined;
     }
   }
 
@@ -432,7 +467,7 @@ export class PdfPreview extends Disposable {
         theme: pdfConfig.get<string>('appearance.theme'),
       },
       reload: {
-        debounceMs: getReloadDebounceMs(),
+        debounceMs: this.reloadDebounceMs,
       },
       initialViewState: persistedViewStateOrUndefined(
         this.workspaceState.get(viewStateKey(this.resource)),

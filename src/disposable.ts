@@ -4,7 +4,11 @@ export function disposeAll(disposables: vscode.Disposable[]): void {
   while (disposables.length) {
     const item = disposables.pop();
     if (item) {
-      item.dispose();
+      try {
+        item.dispose();
+      } catch (error) {
+        console.error('disposeAll error:', error);
+      }
     }
   }
 }

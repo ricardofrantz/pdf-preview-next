@@ -30,6 +30,7 @@ SECURITY.md
 AGENTS.md
 CLAUDE.md
 GEMINI.md
+KIMI.md
 icon.svg
 lib/web/viewer.html
 lib/**/*.map

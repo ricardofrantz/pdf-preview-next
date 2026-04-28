@@ -1,5 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
+import { disposeAll } from '../../disposable';
 import { PDF_WEBVIEW_OPTIONS } from '../../extension';
 import {
   PDF_VIEWER_BODY,
@@ -31,9 +32,17 @@ function assertWebviewContract(): void {
   assert.deepStrictEqual(parseViewerToHostMessage({ type: 'open-source' }), {
     type: 'open-source',
   });
+  assert.strictEqual(
+    parseViewerToHostMessage({ type: 'open-source', extra: true }),
+    undefined,
+  );
   assert.deepStrictEqual(parseViewerToHostMessage({ type: 'open-external' }), {
     type: 'open-external',
   });
+  assert.strictEqual(
+    parseViewerToHostMessage({ type: 'open-external', extra: true }),
+    undefined,
+  );
   assert.deepStrictEqual(
     parseViewerToHostMessage({
       type: 'appearance-theme',
@@ -65,6 +74,12 @@ function assertWebviewContract(): void {
   );
   assert.strictEqual(
     parseViewerToHostMessage({ type: 'appearance-theme', theme: 'sepia' }),
+    undefined,
+  );
+  assert.strictEqual(
+    parseViewerToHostMessage(
+      Object.assign(new Date(), { type: 'open-source' }),
+    ),
     undefined,
   );
   assert.deepStrictEqual(
@@ -171,6 +186,35 @@ function assertWebviewHtmlHooks(): void {
   );
 }
 
+function assertDisposeAllKeepsDraining(): void {
+  const disposed: string[] = [];
+  const errors: unknown[][] = [];
+  const originalConsoleError = console.error;
+  console.error = (...args: unknown[]): void => {
+    errors.push(args);
+  };
+
+  try {
+    const disposables: vscode.Disposable[] = [
+      { dispose: () => disposed.push('first') },
+      {
+        dispose: () => {
+          throw new Error('dispose failed');
+        },
+      },
+      { dispose: () => disposed.push('third') },
+    ];
+
+    disposeAll(disposables);
+
+    assert.deepStrictEqual(disposed, ['third', 'first']);
+    assert.deepStrictEqual(disposables, []);
+    assert.strictEqual(errors.length, 1);
+  } finally {
+    console.error = originalConsoleError;
+  }
+}
+
 async function assertViewStateResetHelper(): Promise<void> {
   const resource = vscode.Uri.parse('file:///workspace/docs/paper.pdf#page=2');
   const updates: Array<[string, unknown]> = [];
@@ -265,6 +309,7 @@ async function assertRuntimeConfigurationScope(
 export async function run(): Promise<void> {
   assertWebviewContract();
   assertWebviewHtmlHooks();
+  assertDisposeAllKeepsDraining();
   await assertViewStateResetHelper();
 
   const extension = vscode.extensions.all.find(
@@ -406,6 +451,11 @@ export async function run(): Promise<void> {
     webviewSourceText,
     /async openSource\([^)]*\)\s*{[\s\S]*?await this\.openExternal\(\);[\s\S]*?}/,
     'External-open action must open PDFs externally.',
+  );
+  assert.match(
+    webviewSourceText,
+    /case ['"]open-source['"]:[\s\S]*?void this\.openSource\(\);[\s\S]*?break;[\s\S]*?case ['"]open-external['"]:[\s\S]*?void this\.openExternal\(\);[\s\S]*?break;/,
+    'Webview open-source and open-external messages must dispatch through separate host methods.',
   );
   assert.match(
     webviewSourceText,
@@ -552,6 +602,31 @@ export async function run(): Promise<void> {
     'lib',
     'main.mjs',
   );
+  assert.doesNotMatch(
+    viewerScriptText,
+    /setInterval\(/,
+    'Print/page-render waiting should not allocate polling intervals.',
+  );
+  assert.match(
+    viewerScriptText,
+    /const VIEW_STATE_PERSIST_DEBOUNCE_MS = 1000;/,
+    'View-state persistence should avoid high-frequency storage writes.',
+  );
+  assert.match(
+    viewerScriptText,
+    /const FIND_HIGHLIGHT_ALL_MIN_QUERY_LENGTH = 3;/,
+    'Find should not highlight every match for very short queries.',
+  );
+  assert.match(
+    viewerScriptText,
+    /const FIND_HIGHLIGHT_ALL_MAX_PAGES = 50;/,
+    'Find should not highlight all matches across large documents.',
+  );
+  assert.match(
+    viewerScriptText,
+    /if \(batch\.length >= PRINT_RENDER_BATCH_SIZE\) {\s*await Promise\.all\(batch\);/s,
+    'Print preparation should render pages in bounded batches.',
+  );
   const polyfillsImportIndex = viewerScriptText.indexOf(
     "import './polyfills.mjs';",
   );
@@ -627,6 +702,23 @@ export async function run(): Promise<void> {
   assert.match(
     viewerScriptText,
     /addEventListener\('DOMContentLoaded', startApp/,
+  );
+
+  const providerSourceText = await readExtensionFile(
+    extension,
+    'out',
+    'src',
+    'pdfProvider.js',
+  );
+  assert.match(
+    providerSourceText,
+    /openSourceForActivePreview\(\)[\s\S]*?preview\.openSource\(\)/,
+    'Open Source command should dispatch through PdfPreview.openSource.',
+  );
+  assert.doesNotMatch(
+    providerSourceText,
+    /openSourceForActivePreview\(\)[\s\S]*?preview\.openExternal\(\)/,
+    'Open Source command should not bypass PdfPreview.openSource.',
   );
 
   const polyfillsScriptText = await readExtensionFile(
