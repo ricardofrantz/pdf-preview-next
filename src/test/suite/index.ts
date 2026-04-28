@@ -73,6 +73,15 @@ export async function run(): Promise<void> {
   assert.match(viewerScriptText, /data,\n\s+disableRange: true/);
   assert.match(viewerScriptText, /disableStream: true/);
   assert.doesNotMatch(viewerScriptText, /url: this\.config\.path/);
+  assert.match(
+    viewerScriptText,
+    /document\.readyState === 'loading'/,
+    'viewer should start immediately if DOMContentLoaded already fired',
+  );
+  assert.match(
+    viewerScriptText,
+    /addEventListener\('DOMContentLoaded', startApp/,
+  );
 
   return Promise.resolve();
 }
