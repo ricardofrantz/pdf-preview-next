@@ -16,6 +16,9 @@
     "vscode-pdf",
     "viewer",
     "preview",
+    "pdf-viewer",
+    "pdf-preview",
+    "pdf-reader",
     "pdfjs",
     "latex",
     "typst"
