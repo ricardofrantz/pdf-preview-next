@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Record the pre-bundling VSIX baseline for the v1.10.0 automation work:
+  `pdf-preview-next-1.9.0.vsix` packages 138 entries and is 1,529,171 bytes
+  (1.46 MiB). Runtime contents are the extension manifest/docs, `lib/` PDF.js
+  assets, and compiled `out/src/*.js` host files.
+
 ## 1.9.0 (2026/04/29)
 
 - Add a thumbnails sidebar panel backed by bounded, IntersectionObserver-driven
