@@ -7,8 +7,7 @@ const forbiddenEntries = [
   /^extension\/\.github\//,
   /^extension\/\.beads\//,
   /^extension\/\.work\//,
-  /^extension\/out\/[^/]+ 2\//,
-  /^extension\/out\/(?:test|[^/]+\/test)\//,
+  /^extension\/out\//,
   /^extension\/src\/test\/fixtures\//,
   /^extension\/src\//,
   /^extension\/test\//,
@@ -77,7 +76,7 @@ function readVsixEntry(entry) {
 }
 
 assertViewerContract({
-  webviewSource: readVsixEntry('extension/out/src/pdfPreview.js'),
+  webviewSource: readVsixEntry('extension/dist/extension.js'),
   stylesSource: readVsixEntry('extension/lib/pdf.css'),
   viewerScriptSource: readVsixEntry('extension/lib/main.mjs'),
   context: basename(vsixPath),

@@ -5,9 +5,7 @@
 .work/**
 *.tgz
 *.vsix
-out/test/**
-out/**/test/**
-out/src 2/**
+out/**
 test/**
 src/**
 src/test/fixtures/**
