@@ -23,8 +23,9 @@ export async function readExtensionFile(
   return Buffer.from(data).toString('utf8');
 }
 
-function minimalPdf(): Uint8Array {
-  const stream = 'BT\n/F1 24 Tf\n72 720 Td\n(PDF Preview Next) Tj\nET\n';
+export function minimalPdf(label = 'PDF Preview Next'): Uint8Array {
+  const safeLabel = label.replace(/[()\\]/g, '');
+  const stream = `BT\n/F1 24 Tf\n72 720 Td\n(${safeLabel}) Tj\nET\n`;
   const objects = [
     '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n',
     '2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n',

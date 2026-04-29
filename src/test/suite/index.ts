@@ -17,6 +17,7 @@ import {
 } from '../../webviewContract';
 import {
   assertPolyfillsWork,
+  minimalPdf,
   readExtensionFile,
   writePdfFixture,
   type RecordedViewerEvent,
@@ -396,6 +397,61 @@ async function assertRuntimeConfigurationScope(
       `${setting} should be read from the resource-scoped configuration.`,
     );
   }
+}
+
+async function waitForViewerEvent(
+  fixtureUri: vscode.Uri,
+  timeoutMs: number,
+  afterReceivedAt = 0,
+): Promise<RecordedViewerEvent> {
+  const event = await vscode.commands.executeCommand<RecordedViewerEvent>(
+    'pdf-preview.internal.waitForViewerEvent',
+    fixtureUri.toString(),
+    timeoutMs,
+    afterReceivedAt,
+  );
+  assert.ok(event, 'PDF viewer should report a load result.');
+  if (event.type === 'viewer-error') {
+    assert.fail(`PDF viewer failed to load fixture: ${event.message}`);
+  }
+  return event;
+}
+
+async function assertFileWatcherReloadDoesNotStealFocus(
+  fixtureUri: vscode.Uri,
+  initialViewerEvent: RecordedViewerEvent,
+): Promise<RecordedViewerEvent> {
+  const sourceDocument = await vscode.workspace.openTextDocument({
+    content: 'PDF Preview focus sentinel\n',
+    language: 'plaintext',
+  });
+  await vscode.window.showTextDocument(sourceDocument, {
+    preserveFocus: false,
+    preview: false,
+    viewColumn: vscode.ViewColumn.One,
+  });
+  assert.strictEqual(
+    vscode.window.activeTextEditor?.document.uri.toString(),
+    sourceDocument.uri.toString(),
+    'Text document should be active before the PDF reload is triggered.',
+  );
+
+  await vscode.workspace.fs.writeFile(
+    fixtureUri,
+    minimalPdf('PDF Preview Next Reloaded'),
+  );
+  const reloadEvent = await waitForViewerEvent(
+    fixtureUri,
+    20000,
+    initialViewerEvent.receivedAt,
+  );
+  assert.strictEqual(
+    vscode.window.activeTextEditor?.document.uri.toString(),
+    sourceDocument.uri.toString(),
+    'File-watcher reload must not steal focus from the active text editor.',
+  );
+
+  return reloadEvent;
 }
 
 export async function run(): Promise<void> {
@@ -966,19 +1022,23 @@ export async function run(): Promise<void> {
     'vscode.openWith',
     fixtureUri,
     'pdf-preview-next.preview',
+    {
+      preserveFocus: false,
+      viewColumn: vscode.ViewColumn.Two,
+    },
   );
-  const viewerEvent = await vscode.commands.executeCommand<RecordedViewerEvent>(
-    'pdf-preview.internal.waitForViewerEvent',
-    fixtureUri.toString(),
-    20000,
-  );
-  assert.ok(viewerEvent, 'PDF viewer should report a load result.');
-  if (viewerEvent.type === 'viewer-error') {
-    assert.fail(`PDF viewer failed to load fixture: ${viewerEvent.message}`);
-  }
+  const viewerEvent = await waitForViewerEvent(fixtureUri, 20000);
   assert.strictEqual(viewerEvent.type, 'viewer-ready');
   assert.strictEqual(viewerEvent.pagesCount, 1);
   assert.strictEqual(viewerEvent.pageNumber, 1);
+
+  const reloadEvent = await assertFileWatcherReloadDoesNotStealFocus(
+    fixtureUri,
+    viewerEvent,
+  );
+  assert.strictEqual(reloadEvent.type, 'viewer-ready');
+  assert.strictEqual(reloadEvent.pagesCount, 1);
+  assert.strictEqual(reloadEvent.pageNumber, 1);
 
   return Promise.resolve();
 }

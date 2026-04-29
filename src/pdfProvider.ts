@@ -83,8 +83,12 @@ export class PdfCustomProvider implements vscode.CustomReadonlyEditorProvider {
   public waitForViewerEvent(
     resource: string,
     timeoutMs = 15000,
+    afterReceivedAt = 0,
   ): Promise<RecordedViewerEvent> {
-    if (this.lastViewerEvent?.resource === resource) {
+    if (
+      this.lastViewerEvent?.resource === resource &&
+      this.lastViewerEvent.receivedAt > afterReceivedAt
+    ) {
       return Promise.resolve(this.lastViewerEvent);
     }
 
@@ -97,7 +101,10 @@ export class PdfCustomProvider implements vscode.CustomReadonlyEditorProvider {
       }, timeoutMs);
 
       const subscription = this.viewerEventEmitter.event((event) => {
-        if (event.resource !== resource) {
+        if (
+          event.resource !== resource ||
+          event.receivedAt <= afterReceivedAt
+        ) {
           return;
         }
 

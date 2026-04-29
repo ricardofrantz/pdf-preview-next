@@ -15,8 +15,11 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(
       vscode.commands.registerCommand(
         'pdf-preview.internal.waitForViewerEvent',
-        async (resource: string, timeoutMs?: number) =>
-          provider.waitForViewerEvent(resource, timeoutMs),
+        async (
+          resource: string,
+          timeoutMs?: number,
+          afterReceivedAt?: number,
+        ) => provider.waitForViewerEvent(resource, timeoutMs, afterReceivedAt),
       ),
     );
   }
