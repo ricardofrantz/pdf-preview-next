@@ -79,6 +79,9 @@ uses the same safe rendering path as `night`.
   an outline.
 - The toolbar `Refresh` button and `Ctrl+R` / `Cmd+R` refresh the current PDF
   without losing the current page, zoom, scroll, or outline-sidebar state.
+- Automatic reloads after file changes keep focus in the current editor. A
+  user-initiated refresh from inside the viewer may restore focus to the viewer
+  control that triggered it.
 - The toolbar `Print` button uses the same host-side system print path as the
   command.
 - Relative links from one local PDF to another local `.pdf` in the same folder
@@ -103,7 +106,7 @@ Install the VSIX from the GitHub release, or from the VS Code Marketplace once
 the publisher token is configured:
 
 ```bash
-code --install-extension pdf-preview-next-1.7.0.vsix --force
+code --install-extension pdf-preview-next-1.8.0.vsix --force
 ```
 
 To make VS Code use this viewer for PDFs:

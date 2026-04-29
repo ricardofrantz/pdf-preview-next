@@ -2,14 +2,18 @@
 
 ## Unreleased
 
+## 1.8.0 (2026/04/29)
+
+- Keep file-watcher reloads from refocusing the viewer while preserving
+  user-initiated refresh focus behavior.
+- Add integration coverage for the file-watcher reload focus path.
+
 ## 1.7.0 (2026/04/29)
 
 - Add host-side system printing for the toolbar and command path, with an
   optional no-shell `pdf-preview.printCommand` override.
 - Add local inter-PDF link handling for relative `.pdf` links, preserving
   fragments such as `#page=2` without relaxing the webview CSP.
-- Keep file-watcher reloads from refocusing the viewer while preserving
-  user-initiated refresh focus behavior.
 - Make `PDF Preview Next: Reset View State` reset the active webview
   immediately instead of waiting for the next open.
 
