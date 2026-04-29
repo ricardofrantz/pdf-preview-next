@@ -2,7 +2,7 @@
   "name": "pdf-preview-next",
   "displayName": "vscode-pdf Next",
   "description": "Modern successor to vscode-pdf: fast, secure PDF viewing in VS Code with PDF.js 5, live reload, search, outline, dark modes, and reliable preview state.",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "publisher": "ricardofrantz",
   "engines": {
     "vscode": "^1.95.0",

@@ -50,7 +50,8 @@ where VS Code supports resource configuration. Reload settings remain global
 because they control file-watcher behavior rather than document rendering
 defaults. `pdf-preview.default.sidebar` controls whether the sidebar opens by
 default; `pdf-preview.default.sidebarPanel` selects the initial panel (`outline`
-or `thumbnails`).
+or `thumbnails`). If an older per-PDF view state does not yet include a sidebar
+panel, the viewer restores it as `outline` for compatibility.
 
 Example dark page rendering:
 
@@ -110,7 +111,7 @@ Install the VSIX from the GitHub release, or from the VS Code Marketplace once
 the publisher token is configured:
 
 ```bash
-code --install-extension pdf-preview-next-1.8.0.vsix --force
+code --install-extension pdf-preview-next-1.9.0.vsix --force
 ```
 
 To make VS Code use this viewer for PDFs:

@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 1.9.0 (2026/04/29)
+
+- Add a thumbnails sidebar panel backed by bounded, IntersectionObserver-driven
+  canvas rendering so large PDFs do not allocate thumbnails for every page at
+  once.
+- Add `pdf-preview.default.sidebarPanel` with `outline` and `thumbnails` values;
+  `pdf-preview.default.sidebar` still controls whether the sidebar opens by
+  default.
+- Persist the active sidebar panel with per-PDF view state while preserving
+  compatibility with older saved view states that only stored outline visibility.
+- Add thumbnail click navigation, active-page tracking, and keyboard navigation:
+  Up/Down move through thumbnails and Enter jumps to the focused page.
+
 ## 1.8.0 (2026/04/29)
 
 - Keep file-watcher reloads from refocusing the viewer while preserving
