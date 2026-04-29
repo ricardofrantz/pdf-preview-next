@@ -46,6 +46,9 @@ jobs:
       - name: Check PDF.js runtime compatibility
         run: npm run test:compat
 
+      - name: Test VSIX scanner
+        run: npm run package:scan:test
+
       - name: Test
         run: xvfb-run -a npm test
 
