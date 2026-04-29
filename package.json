@@ -185,6 +185,7 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
+    "bundle": "node ./esbuild.config.mjs",
     "typecheck": "tsc --noEmit -p ./",
     "watch": "tsc -w -p ./",
     "pretest": "npm run compile && npm run test:compat",
@@ -205,6 +206,7 @@
     "@typescript-eslint/parser": "^8.59.0",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.9.1",
+    "esbuild": "^0.28.0",
     "eslint": "^9.39.4",
     "globals": "^15.15.0",
     "prettier": "^3.8.3",

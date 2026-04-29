@@ -18,6 +18,7 @@ src/test/fixtures/**
 .prettierrc.json
 tsconfig.json
 eslint.config.mjs
+esbuild.config.mjs
 package-lock.json
 tools/**
 scratch/**
