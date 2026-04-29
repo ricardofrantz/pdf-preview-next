@@ -354,6 +354,11 @@ body.theme-inverted {
   background: var(--vscode-list-hoverBackground);
 }
 
+.thumbnail-item:focus-visible {
+  outline: 2px solid var(--vscode-focusBorder);
+  outline-offset: -2px;
+}
+
 .thumbnail-item.is-active {
   background: var(--vscode-list-activeSelectionBackground);
   color: var(--vscode-list-activeSelectionForeground);

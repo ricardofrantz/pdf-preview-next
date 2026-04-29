@@ -176,7 +176,7 @@ export const PDF_VIEWER_BODY = `<body>
         </section>
         <section id="thumbnailPanel" class="sidebar-panel thumbnail-panel hidden" role="tabpanel" aria-labelledby="thumbnailPanelTab" aria-label="Page thumbnails" hidden>
           <div class="sidebar-header">Thumbnails</div>
-          <div id="thumbnailList" class="thumbnail-list" role="list" aria-label="Page thumbnails"></div>
+          <div id="thumbnailList" class="thumbnail-list" aria-label="Page thumbnails"></div>
         </section>
       </aside>
       <div class="viewer-region">

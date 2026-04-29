@@ -78,8 +78,9 @@ uses the same safe rendering path as `night`.
 - The toolbar `External` button opens the PDF with the system PDF handler.
 - The toolbar page-mode button cycles through `Clear`, `Night`, `Reader`, and
   `Invert`, and keeps that choice for refreshes and newly opened PDFs.
-- The toolbar `Outline` button shows PDF bookmarks when the document provides
-  an outline.
+- The toolbar sidebar button shows PDF bookmarks or page thumbnails. Thumbnail
+  rendering is bounded so large PDFs do not allocate canvases for every page at
+  once.
 - The toolbar `Refresh` button and `Ctrl+R` / `Cmd+R` refresh the current PDF
   without losing the current page, zoom, scroll, or outline-sidebar state.
 - Automatic reloads after file changes keep focus in the current editor. A

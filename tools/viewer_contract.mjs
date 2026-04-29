@@ -59,7 +59,7 @@ export function assertViewerContract({
   );
   assert.match(
     webviewSource,
-    /<section id="thumbnailPanel"[^>]*class="sidebar-panel thumbnail-panel hidden"[^>]*aria-label="Page thumbnails"[^>]*hidden>[\s\S]*?<div id="thumbnailList" class="thumbnail-list" role="list" aria-label="Page thumbnails"><\/div>/,
+    /<section id="thumbnailPanel"[^>]*class="sidebar-panel thumbnail-panel hidden"[^>]*aria-label="Page thumbnails"[^>]*hidden>[\s\S]*?<div id="thumbnailList" class="thumbnail-list" aria-label="Page thumbnails"><\/div>/,
     `${context}: viewer must include the thumbnail sidebar panel shell.`,
   );
 
@@ -168,6 +168,21 @@ export function assertViewerContract({
       viewerScriptSource,
       /captureViewState\(\)\s*{[\s\S]*?sidebarPanel: this\.activeSidebarPanel/,
       `${context}: view-state persistence must include the active sidebar panel.`,
+    );
+    assert.match(
+      viewerScriptSource,
+      /const THUMBNAIL_MAX_CANVASES = 8;/,
+      `${context}: thumbnail rendering must keep a bounded live canvas pool.`,
+    );
+    assert.match(
+      viewerScriptSource,
+      /new IntersectionObserver\([\s\S]*?root: this\.elements\.thumbnailPanel/,
+      `${context}: thumbnail rendering must be driven by sidebar visibility, not all pages at once.`,
+    );
+    assert.match(
+      viewerScriptSource,
+      /handleThumbnailKeydown\(event\)\s*{[\s\S]*?event\.key === 'ArrowUp'[\s\S]*?event\.key === 'ArrowDown'[\s\S]*?event\.key === 'Enter'/,
+      `${context}: thumbnail keyboard navigation must handle up/down focus and enter activation.`,
     );
   }
 }

@@ -247,7 +247,7 @@ function assertWebviewHtmlHooks(): void {
   );
   assert.match(
     PDF_VIEWER_BODY,
-    /<section id="thumbnailPanel"[^>]*class="sidebar-panel thumbnail-panel hidden"[^>]*aria-label="Page thumbnails"[^>]*hidden>[\s\S]*?<div id="thumbnailList" class="thumbnail-list" role="list" aria-label="Page thumbnails"><\/div>/,
+    /<section id="thumbnailPanel"[^>]*class="sidebar-panel thumbnail-panel hidden"[^>]*aria-label="Page thumbnails"[^>]*hidden>[\s\S]*?<div id="thumbnailList" class="thumbnail-list" aria-label="Page thumbnails"><\/div>/,
     'Viewer body hook should expose the thumbnail sidebar shell.',
   );
 
@@ -852,6 +852,21 @@ export async function run(): Promise<void> {
     viewerScriptText,
     /captureViewState\(\)\s*{[\s\S]*?sidebarPanel: this\.activeSidebarPanel/,
     'View-state persistence must include the active sidebar panel.',
+  );
+  assert.match(
+    viewerScriptText,
+    /const THUMBNAIL_MAX_CANVASES = 8;/,
+    'Thumbnail rendering must keep a bounded live canvas pool.',
+  );
+  assert.match(
+    viewerScriptText,
+    /new IntersectionObserver\([\s\S]*?root: this\.elements\.thumbnailPanel/,
+    'Thumbnail rendering should be IntersectionObserver-driven.',
+  );
+  assert.match(
+    viewerScriptText,
+    /handleThumbnailKeydown\(event\)\s*{[\s\S]*?event\.key === 'ArrowUp'[\s\S]*?event\.key === 'ArrowDown'[\s\S]*?event\.key === 'Enter'/,
+    'Thumbnail keyboard navigation must support up/down and Enter.',
   );
   assert.doesNotMatch(
     viewerScriptText,
