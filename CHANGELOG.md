@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 2.0.0 (2026/04/29)
+
+- Promote the fork to a public release after the PDF.js 5 viewer hardening,
+  package hygiene, thumbnail navigation, print/link handling, focus-preserving
+  reloads, and bundled release automation work completed across the 1.x line.
+- Keep the 1.10.0 bundled extension-host runtime and guarded release workflow;
+  this release is a metadata/publication milestone rather than a viewer runtime
+  rewrite.
+
 ## 1.10.0 (2026/04/29)
 
 - Bundle the extension host entrypoint with esbuild and load the extension from

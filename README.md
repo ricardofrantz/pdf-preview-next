@@ -111,7 +111,7 @@ Install the VSIX from the GitHub release, or from the VS Code Marketplace once
 the publisher token is configured:
 
 ```bash
-code --install-extension pdf-preview-next-1.10.0.vsix --force
+code --install-extension pdf-preview-next-2.0.0.vsix --force
 ```
 
 To make VS Code use this viewer for PDFs:
@@ -139,7 +139,7 @@ npm run typecheck
 npm run lint
 npm test
 npm run package -- --no-dependencies --allow-package-all-secrets --allow-package-env-file
-npm run package:scan -- pdf-preview-next-1.10.0.vsix
+npm run package:scan -- pdf-preview-next-2.0.0.vsix
 ```
 
 `npm run package:scan` verifies that the VSIX contains the bundled entrypoint
