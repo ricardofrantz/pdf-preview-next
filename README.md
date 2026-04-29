@@ -111,7 +111,7 @@ Install the VSIX from the GitHub release, or from the VS Code Marketplace once
 the publisher token is configured:
 
 ```bash
-code --install-extension pdf-preview-next-1.9.0.vsix --force
+code --install-extension pdf-preview-next-1.10.0.vsix --force
 ```
 
 To make VS Code use this viewer for PDFs:
@@ -123,6 +123,33 @@ To make VS Code use this viewer for PDFs:
 ```
 
 ![screenshot](https://user-images.githubusercontent.com/3643499/84454816-98fcd600-ac96-11ea-822c-3ae1e1599a13.gif)
+
+## Build And Release Hygiene
+
+The extension host is bundled with esbuild into `dist/extension.js`; VS Code
+loads that bundled entrypoint. `vscode` stays external so the extension host
+provides it at runtime. `npm test` builds the bundle before running the VS Code
+suite, and `npm run package` runs the same bundle step through
+`vscode:prepublish`.
+
+Before publishing, run:
+
+```bash
+npm run typecheck
+npm run lint
+npm test
+npm run package -- --no-dependencies --allow-package-all-secrets --allow-package-env-file
+npm run package:scan -- pdf-preview-next-1.10.0.vsix
+```
+
+`npm run package:scan` verifies that the VSIX contains the bundled entrypoint
+and required `lib/` runtime assets while rejecting source files, maps, test
+fixtures, plans, scratch/temp files, and stale `out/` output.
+
+The release workflow is intentionally guarded: third-party actions are pinned by
+full commit SHA, CI/release jobs use concurrency groups, and Marketplace/Open
+VSX publishing runs in the `marketplace-publish` GitHub environment. Configure
+that environment with required reviewers before adding publish tokens.
 
 ## Contribute
 

@@ -2,10 +2,22 @@
 
 ## Unreleased
 
-- Record the pre-bundling VSIX baseline for the v1.10.0 automation work:
-  `pdf-preview-next-1.9.0.vsix` packages 138 entries and is 1,529,171 bytes
-  (1.46 MiB). Runtime contents are the extension manifest/docs, `lib/` PDF.js
-  assets, and compiled `out/src/*.js` host files.
+## 1.10.0 (2026/04/29)
+
+- Bundle the extension host entrypoint with esbuild and load the extension from
+  `dist/extension.js` instead of compiled `out/src` files.
+- Keep `vscode` external to the bundle, run the bundle step during
+  `vscode:prepublish`, and build the bundled entrypoint before VS Code tests.
+- Tighten VSIX hygiene so packages ship the bundled host output and `lib/`
+  runtime assets only; the scanner now rejects maps, source/test files, plans,
+  scratch/temp files, and missing PDF.js runtime files.
+- Record the pre-bundling baseline for comparison:
+  `pdf-preview-next-1.9.0.vsix` packaged 138 entries and was 1,529,171 bytes
+  (1.46 MiB). The bundled `pdf-preview-next-1.10.0.vsix` packages 133 entries
+  and is 1,525,689 bytes (1.45 MiB).
+- Harden release automation with SHA-pinned GitHub Actions, workflow
+  concurrency groups, and a `marketplace-publish` environment gate before VS
+  Code Marketplace or Open VSX publishing can use configured secrets.
 
 ## 1.9.0 (2026/04/29)
 
