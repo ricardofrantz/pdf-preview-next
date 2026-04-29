@@ -865,8 +865,18 @@ export async function run(): Promise<void> {
   );
   assert.match(
     viewerScriptText,
-    /handleThumbnailKeydown\(event\)\s*{[\s\S]*?event\.key === 'ArrowUp'[\s\S]*?event\.key === 'ArrowDown'[\s\S]*?event\.key === 'Enter'/,
-    'Thumbnail keyboard navigation must support up/down and Enter.',
+    /populateThumbnails\(pdfDocument, token\)\s*{[\s\S]*?pageNumber <= pdfDocument\.numPages[\s\S]*?this\.createThumbnailItem\(pageNumber\)/,
+    'Thumbnail setup must create one navigation item per PDF page.',
+  );
+  assert.match(
+    viewerScriptText,
+    /createThumbnailItem\(pageNumber\)\s*{[\s\S]*?addEventListener\('click'[\s\S]*?this\.pdfViewer\.currentPageNumber = pageNumber/s,
+    'Clicking a thumbnail must navigate the PDF viewer to that page.',
+  );
+  assert.match(
+    viewerScriptText,
+    /handleThumbnailKeydown\(event\)\s*{[\s\S]*?event\.key === 'ArrowUp'[\s\S]*?event\.key === 'ArrowDown'[\s\S]*?event\.key === 'Enter'[\s\S]*?currentItem\.click\(\)/,
+    'Thumbnail keyboard navigation must support up/down focus and Enter activation.',
   );
   assert.doesNotMatch(
     viewerScriptText,

@@ -181,7 +181,17 @@ export function assertViewerContract({
     );
     assert.match(
       viewerScriptSource,
-      /handleThumbnailKeydown\(event\)\s*{[\s\S]*?event\.key === 'ArrowUp'[\s\S]*?event\.key === 'ArrowDown'[\s\S]*?event\.key === 'Enter'/,
+      /populateThumbnails\(pdfDocument, token\)\s*{[\s\S]*?pageNumber <= pdfDocument\.numPages[\s\S]*?this\.createThumbnailItem\(pageNumber\)/,
+      `${context}: thumbnail setup must create one navigation item per PDF page.`,
+    );
+    assert.match(
+      viewerScriptSource,
+      /createThumbnailItem\(pageNumber\)\s*{[\s\S]*?addEventListener\('click'[\s\S]*?this\.pdfViewer\.currentPageNumber = pageNumber/s,
+      `${context}: clicking a thumbnail must navigate the PDF viewer to that page.`,
+    );
+    assert.match(
+      viewerScriptSource,
+      /handleThumbnailKeydown\(event\)\s*{[\s\S]*?event\.key === 'ArrowUp'[\s\S]*?event\.key === 'ArrowDown'[\s\S]*?event\.key === 'Enter'[\s\S]*?currentItem\.click\(\)/,
       `${context}: thumbnail keyboard navigation must handle up/down focus and enter activation.`,
     );
   }
