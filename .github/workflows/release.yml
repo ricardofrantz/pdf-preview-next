@@ -4,6 +4,16 @@ on:
   push:
     tags:
       - v*
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Tag name to package for a dry run or guarded manual release.
+        required: true
+        default: v2.0.0
+      dry_run:
+        description: Verify and package only; skip GitHub Release and registry publishing.
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -11,6 +21,10 @@ permissions:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
+
+env:
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+  DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
 
 jobs:
   release:
@@ -41,7 +55,7 @@ jobs:
 
       - name: Package VSIX
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${RELEASE_TAG#v}"
           npx @vscode/vsce package --out "pdf-preview-next-${VERSION}.vsix"
           node ./tools/scan_vsix.mjs "pdf-preview-next-${VERSION}.vsix"
 
@@ -53,19 +67,26 @@ jobs:
           if-no-files-found: error
 
       - name: Upload GitHub release asset
+        if: env.DRY_RUN != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           VSIX="$(ls pdf-preview-next-*.vsix | head -n 1)"
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" "$VSIX" --clobber
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" "$VSIX" --clobber
           else
-            gh release create "$GITHUB_REF_NAME" "$VSIX" \
-              --title "$GITHUB_REF_NAME" \
+            gh release create "$RELEASE_TAG" "$VSIX" \
+              --title "$RELEASE_TAG" \
               --generate-notes
           fi
 
+      - name: Note release dry run
+        if: env.DRY_RUN == 'true'
+        run: |
+          echo "Dry run completed for $RELEASE_TAG; GitHub Release and registry publishing were skipped."
+
   publish-marketplaces:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run == false }}
     needs: release
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -74,7 +95,7 @@ jobs:
     # Configure this environment with required reviewers in GitHub repository settings.
     environment:
       name: marketplace-publish
-      url: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}
+      url: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
     env:
       OVSX_PAT: ${{ secrets.OVSX_PAT }}
       VSCE_PAT: ${{ secrets.VSCE_PAT }}
