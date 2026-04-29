@@ -30,6 +30,7 @@ function assertWebviewContract(): void {
     scrollLeft: 10,
     scrollTop: 20,
     outlineVisible: true,
+    sidebarPanel: 'thumbnails' as const,
   };
 
   assert.deepStrictEqual(parseViewerToHostMessage({ type: 'open-source' }), {
@@ -150,6 +151,23 @@ function assertWebviewContract(): void {
       scrollLeft: Number.NaN,
     }),
     undefined,
+  );
+  assert.strictEqual(
+    persistedViewStateOrUndefined({
+      ...viewState,
+      sidebarPanel: 'attachments',
+    }),
+    undefined,
+  );
+  assert.ok(
+    persistedViewStateOrUndefined({
+      pageNumber: 1,
+      scaleValue: 'auto',
+      scrollLeft: 0,
+      scrollTop: 0,
+      outlineVisible: false,
+    }),
+    'Stored view states without sidebarPanel should remain valid.',
   );
 
   const stateKey = viewStateKey(
@@ -829,6 +847,11 @@ export async function run(): Promise<void> {
     viewerScriptText,
     /const FIND_HIGHLIGHT_ALL_MAX_PAGES = 50;/,
     'Find should not highlight all matches across large documents.',
+  );
+  assert.match(
+    viewerScriptText,
+    /captureViewState\(\)\s*{[\s\S]*?sidebarPanel: this\.activeSidebarPanel/,
+    'View-state persistence must include the active sidebar panel.',
   );
   assert.doesNotMatch(
     viewerScriptText,

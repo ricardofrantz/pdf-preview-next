@@ -6,6 +6,7 @@ export interface PersistedViewState {
   scrollLeft: number;
   scrollTop: number;
   outlineVisible?: boolean;
+  sidebarPanel?: 'outline' | 'thumbnails';
 }
 
 export type ViewerToHostMessage =
@@ -74,7 +75,7 @@ export function isPersistedViewState(
     !hasExpectedKeys(
       value,
       ['pageNumber', 'scaleValue', 'scrollLeft', 'scrollTop'],
-      ['outlineVisible'],
+      ['outlineVisible', 'sidebarPanel'],
     )
   ) {
     return false;
@@ -90,7 +91,10 @@ export function isPersistedViewState(
     typeof value.scrollTop === 'number' &&
     Number.isFinite(value.scrollTop) &&
     (value.outlineVisible === undefined ||
-      typeof value.outlineVisible === 'boolean')
+      typeof value.outlineVisible === 'boolean') &&
+    (value.sidebarPanel === undefined ||
+      value.sidebarPanel === 'outline' ||
+      value.sidebarPanel === 'thumbnails')
   );
 }
 

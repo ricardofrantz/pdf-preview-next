@@ -73,8 +73,8 @@ uses the same safe rendering path as `night`.
 - `vscode-pdf Next: Refresh Preview` refreshes the active PDF preview.
 - `vscode-pdf Next: Print to System` sends the active PDF to `lp` or to the
   configured print command, falling back to the system PDF handler.
-- `PDF Preview Next: Reset View State` clears the saved page, zoom, scroll, and
-  outline-sidebar state for the active PDF only.
+- `PDF Preview Next: Reset View State` clears the saved page, zoom, scroll,
+  sidebar visibility, and active sidebar panel for the active PDF only.
 - The toolbar `External` button opens the PDF with the system PDF handler.
 - The toolbar page-mode button cycles through `Clear`, `Night`, `Reader`, and
   `Invert`, and keeps that choice for refreshes and newly opened PDFs.

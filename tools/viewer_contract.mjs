@@ -164,5 +164,10 @@ export function assertViewerContract({
       /function applyPageColorVariables\(viewer, theme\)\s*{[\s\S]*?viewer\.style\.setProperty\(['"]--page-bg-color['"], pageColors\.background\);[\s\S]*?viewer\.style\.removeProperty\(['"]--page-bg-color['"]\);[\s\S]*?}/,
       `${context}: viewer must apply page background variables before PDF.js finishes loading.`,
     );
+    assert.match(
+      viewerScriptSource,
+      /captureViewState\(\)\s*{[\s\S]*?sidebarPanel: this\.activeSidebarPanel/,
+      `${context}: view-state persistence must include the active sidebar panel.`,
+    );
   }
 }
