@@ -222,6 +222,11 @@ function assertWebviewHtmlHooks(): void {
     /<button id="themeToggle"[^>]*>[\s\S]*?<span class="label">Clear<\/span>/,
     'Viewer body hook should expose the page-mode button markup.',
   );
+  assert.match(
+    PDF_VIEWER_BODY,
+    /<section id="thumbnailPanel"[^>]*class="sidebar-panel thumbnail-panel hidden"[^>]*aria-label="Page thumbnails"[^>]*hidden>[\s\S]*?<div id="thumbnailList" class="thumbnail-list" role="list" aria-label="Page thumbnails"><\/div>/,
+    'Viewer body hook should expose the thumbnail sidebar shell.',
+  );
 
   const html = renderPdfPreviewHtml({
     csp: "default-src 'none'; script-src 'nonce-fixed' vscode-resource:; style-src 'unsafe-inline' vscode-resource:",

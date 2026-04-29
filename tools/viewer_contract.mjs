@@ -52,6 +52,11 @@ export function assertViewerContract({
     /<button id="themeToggle"[^>]*title="Switch PDF page mode to Night"[^>]*aria-label="Switch PDF page mode to Night"[^>]*aria-pressed="false"[^>]*>[\s\S]*?<use href="#icon-theme"\/>[\s\S]*?<span class="label">Clear<\/span>/,
     `${context}: theme cycle button must expose a pressed state, next-mode label, and icon.`,
   );
+  assert.match(
+    webviewSource,
+    /<section id="thumbnailPanel"[^>]*class="sidebar-panel thumbnail-panel hidden"[^>]*aria-label="Page thumbnails"[^>]*hidden>[\s\S]*?<div id="thumbnailList" class="thumbnail-list" role="list" aria-label="Page thumbnails"><\/div>/,
+    `${context}: viewer must include the thumbnail sidebar panel shell.`,
+  );
 
   for (const buttonId of toolbarButtonIds) {
     assert.match(
@@ -111,6 +116,16 @@ export function assertViewerContract({
     stylesSource,
     /@container\s*\(max-width:\s*720px\)[^{]*{[^}]*\.label[^}]*display:\s*none/,
     `${context}: @container query must hide .label at 720px.`,
+  );
+  assert.match(
+    stylesSource,
+    /\.thumbnail-list\s*{[^}]*display:\s*flex;[^}]*flex-direction:\s*column/s,
+    `${context}: thumbnail panel must stack page thumbnails vertically.`,
+  );
+  assert.match(
+    stylesSource,
+    /\.thumbnail-canvas-shell\s*{[^}]*min-height:\s*150px;[^}]*border:\s*1px solid var\(--vscode-panel-border\)/s,
+    `${context}: thumbnail canvas shell must reserve stable space without decorative cards.`,
   );
   assert.match(
     stylesSource,

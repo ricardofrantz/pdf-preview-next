@@ -220,13 +220,20 @@ body.theme-inverted {
 }
 
 .outline-sidebar {
+  display: flex;
   flex: 0 0 240px;
-  overflow: auto;
+  flex-direction: column;
+  overflow: hidden;
   border-right: 1px solid var(--vscode-panel-border);
   background: var(--vscode-sideBar-background, var(--vscode-editor-background));
 }
 
-.outline-header {
+.sidebar-panel {
+  min-height: 0;
+  overflow: auto;
+}
+
+.sidebar-header {
   position: sticky;
   top: 0;
   z-index: 1;
@@ -298,6 +305,63 @@ body.theme-inverted {
 
 .outline-depth-6 {
   --outline-indent: 72px;
+}
+
+.thumbnail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px 14px;
+}
+
+.thumbnail-item {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 6px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--vscode-sideBar-foreground, var(--vscode-foreground));
+  background: transparent;
+  text-align: center;
+}
+
+.thumbnail-item:hover:not(:disabled) {
+  background: var(--vscode-list-hoverBackground);
+}
+
+.thumbnail-item.is-active {
+  background: var(--vscode-list-activeSelectionBackground);
+  color: var(--vscode-list-activeSelectionForeground);
+}
+
+.thumbnail-canvas-shell {
+  display: grid;
+  width: 100%;
+  min-height: 150px;
+  place-items: center;
+  box-sizing: border-box;
+  border: 1px solid var(--vscode-panel-border);
+  background: var(--vscode-editor-background);
+}
+
+.thumbnail-canvas-shell canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.thumbnail-page-label {
+  display: block;
+  margin-top: 6px;
+  color: var(--vscode-descriptionForeground);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.thumbnail-placeholder {
+  color: var(--vscode-descriptionForeground);
+  font-size: 11px;
 }
 
 #viewerContainer {

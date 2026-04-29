@@ -165,9 +165,15 @@ export const PDF_VIEWER_BODY = `<body>
       <span id="status" role="status" aria-live="polite"></span>
     </header>
     <div id="pdf-content">
-      <aside id="outlineSidebar" class="outline-sidebar hidden" aria-label="Document outline">
-        <div class="outline-header">Outline</div>
-        <div id="outlineTree" class="outline-tree"></div>
+      <aside id="outlineSidebar" class="outline-sidebar hidden" aria-label="Document sidebar">
+        <section id="outlinePanel" class="sidebar-panel outline-panel" aria-label="Document outline">
+          <div class="sidebar-header outline-header">Outline</div>
+          <div id="outlineTree" class="outline-tree"></div>
+        </section>
+        <section id="thumbnailPanel" class="sidebar-panel thumbnail-panel hidden" aria-label="Page thumbnails" hidden>
+          <div class="sidebar-header">Thumbnails</div>
+          <div id="thumbnailList" class="thumbnail-list" role="list" aria-label="Page thumbnails"></div>
+        </section>
       </aside>
       <div class="viewer-region">
         <div id="viewerContainer" role="main" tabindex="0">
