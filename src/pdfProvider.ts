@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { PdfPreview } from './pdfPreview';
+import { printPdf } from './print';
 import type { ViewerEvent } from './webviewContract';
 
 export type RecordedViewerEvent = ViewerEvent & { receivedAt: number };
@@ -61,7 +62,13 @@ export class PdfCustomProvider implements vscode.CustomReadonlyEditorProvider {
   }
 
   public async printActivePreview(): Promise<void> {
-    await this.withActivePreview((preview) => preview.print());
+    if (!this.activePreview) {
+      await vscode.window.showInformationMessage(
+        'Open a PDF Preview Next tab first.',
+      );
+      return;
+    }
+    await printPdf(this.activePreview.resourceUri);
   }
 
   public async resetViewStateForActivePreview(): Promise<void> {

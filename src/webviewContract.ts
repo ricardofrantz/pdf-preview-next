@@ -21,15 +21,17 @@ export type ViewerToHostMessage =
         | 'inverted';
     }
   | { type: 'open-external' }
+  | { type: 'open-pdf-link'; href: string }
   | { type: 'open-source' }
+  | { type: 'print-request' }
   | { type: 'view-state'; state: PersistedViewState }
   | { type: 'viewer-ready'; pagesCount: number; pageNumber: number }
   | { type: 'viewer-error'; message: string };
 
 export type HostToViewerMessage =
   | { type: 'file-deleted' }
-  | { type: 'print' }
-  | { type: 'reload' };
+  | { type: 'reload' }
+  | { type: 'reset-view-state' };
 
 export type ViewerEvent =
   | {
@@ -109,6 +111,22 @@ export function parseViewerToHostMessage(
     case 'open-external':
       if (hasExpectedKeys(message, ['type'])) {
         return { type: 'open-external' };
+      }
+      break;
+
+    case 'print-request':
+      if (hasExpectedKeys(message, ['type'])) {
+        return { type: 'print-request' };
+      }
+      break;
+
+    case 'open-pdf-link':
+      if (
+        hasExpectedKeys(message, ['type', 'href']) &&
+        typeof message.href === 'string' &&
+        message.href.length > 0
+      ) {
+        return { type: 'open-pdf-link', href: message.href };
       }
       break;
 

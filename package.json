@@ -69,7 +69,7 @@
       },
       {
         "command": "pdf-preview.print",
-        "title": "vscode-pdf Next: Print"
+        "title": "vscode-pdf Next: Print to System"
       },
       {
         "command": "pdf-preview.resetViewState",
@@ -162,6 +162,12 @@
             "normal",
             "wide"
           ]
+        },
+        "pdf-preview.printCommand": {
+          "markdownDescription": "Custom command line for printing PDFs. Use `{{file}}` as a placeholder for the PDF path; when omitted, the path is appended as the last argument. The command is executed without a shell. When empty, the extension tries `lp` then falls back to the system viewer.",
+          "type": "string",
+          "scope": "resource",
+          "default": ""
         }
       }
     }

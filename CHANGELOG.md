@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Add host-side system printing for the toolbar and command path, with an
+  optional no-shell `pdf-preview.printCommand` override.
+- Add local inter-PDF link handling for relative `.pdf` links, preserving
+  fragments such as `#page=2` without relaxing the webview CSP.
+- Keep file-watcher reloads from refocusing the viewer while preserving
+  user-initiated refresh focus behavior.
+- Make `PDF Preview Next: Reset View State` reset the active webview
+  immediately instead of waiting for the next open.
+
 ## 1.6.0 (2026/04/28)
 
 - Add checked-in regression fixtures for outline, password-protected, and
@@ -67,7 +76,7 @@
   methods during the first PDF render, but the V8 inside current VS Code
   Electron builds does not yet expose them; without the polyfill the
   toolbar status reports `Could not load PDF: this[#fr].getOrInsertComputed
-  is not a function`.
+is not a function`.
 - Keep the local webview PDF data loading path from 1.4.5 and remove temporary
   diagnostic banner/logging instrumentation.
 
@@ -209,6 +218,7 @@
 - Preserve the current page number and zoom level on reload (#121)
 
 ### Thank you
+
 - @lramos15 Added settings about untrusted workspaces. #102
 - @aifreedom Fixed bug about Unicode charactors. #116
 - @simon446 Bump pdf.js version. #120
@@ -217,13 +227,13 @@
 ## 1.1.0 (2020/07/13)
 
 - The issue about extension view is resolved.
-  + Remove message shown on loaded. 
+  - Remove message shown on loaded.
 - Support default viewer settings
-  + cursor (**hand** or tool)
-  + scale (**auto**, page-actual, etc...)
-  + sidebar (**hide** or show)
-  + scrollMode (**vertical**, horizontal or wrapped)
-  + spreadMode (**none**, odd or even)
+  - cursor (**hand** or tool)
+  - scale (**auto**, page-actual, etc...)
+  - sidebar (**hide** or show)
+  - scrollMode (**vertical**, horizontal or wrapped)
+  - spreadMode (**none**, odd or even)
 
 ## 1.0.0 (2020/06/18)
 
@@ -237,7 +247,8 @@
 - Migrate vscode-extension packages
 
 ### Thank you
-- @GeorchW Implemented auto-refresh ( #11 )  #52
+
+- @GeorchW Implemented auto-refresh ( #11 ) #52
 
 ## 0.5.0 (2019/02/25)
 
@@ -263,6 +274,7 @@
 - Upgrade PDF.js to 1.9.426 (#23)
 
 ### Thank you
+
 - @Kampfgnom bump to pdf.js version #23
 
 ## 0.2.0 (2017/1/12)
@@ -271,6 +283,7 @@
 - Be able to open PDF from context menu in explorer now (#6)
 
 ### Thank you
+
 - @serl support for context menu in explorer #6
 
 ## 0.1.0 (2016/11/30)

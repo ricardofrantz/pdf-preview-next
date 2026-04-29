@@ -2,6 +2,7 @@ import * as crypto from 'crypto';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { Disposable } from './disposable';
+import { printPdf } from './print';
 import {
   parseViewerToHostMessage,
   persistedViewStateOrUndefined,
@@ -206,7 +207,7 @@ export function renderPdfPreviewHtml({
   mainScriptUri,
 }: PdfPreviewHtmlOptions): string {
   const head = `<!DOCTYPE html>
-<html dir="ltr" mozdisallowselectionprint>
+<html dir="ltr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -270,6 +271,62 @@ export async function clearPdfPreviewViewState(
   await workspaceState.update(viewStateKey(resource), undefined);
 }
 
+export function resolvePdfLinkTarget(
+  resource: vscode.Uri,
+  href: string,
+): vscode.Uri | undefined {
+  if (resource.scheme !== 'file') {
+    return undefined;
+  }
+
+  const trimmedHref = href.trim();
+  if (
+    !trimmedHref ||
+    trimmedHref.startsWith('#') ||
+    trimmedHref.startsWith('//') ||
+    /^[a-z][a-z0-9+.-]*:/i.test(trimmedHref)
+  ) {
+    return undefined;
+  }
+
+  const hashIndex = trimmedHref.indexOf('#');
+  const pathAndQuery =
+    hashIndex >= 0 ? trimmedHref.slice(0, hashIndex) : trimmedHref;
+  const fragment = hashIndex >= 0 ? trimmedHref.slice(hashIndex + 1) : '';
+  const queryIndex = pathAndQuery.indexOf('?');
+  const rawPath =
+    queryIndex >= 0 ? pathAndQuery.slice(0, queryIndex) : pathAndQuery;
+  const query = queryIndex >= 0 ? pathAndQuery.slice(queryIndex + 1) : '';
+
+  if (!rawPath.toLowerCase().endsWith('.pdf')) {
+    return undefined;
+  }
+
+  let decodedPath: string;
+  try {
+    decodedPath = decodeURIComponent(rawPath);
+  } catch {
+    return undefined;
+  }
+
+  if (decodedPath.startsWith('/') || path.isAbsolute(decodedPath)) {
+    return undefined;
+  }
+
+  const currentDir = path.dirname(resource.fsPath);
+  const targetPath = path.resolve(currentDir, decodedPath);
+  const relativePath = path.relative(currentDir, targetPath);
+  if (
+    relativePath === '..' ||
+    relativePath.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relativePath)
+  ) {
+    return undefined;
+  }
+
+  return vscode.Uri.file(targetPath).with({ fragment, query });
+}
+
 export class PdfPreview extends Disposable {
   private reloadTimer: ReturnType<typeof setTimeout> | undefined;
   private reloadBurstStartedAt: number | undefined;
@@ -312,6 +369,12 @@ export class PdfPreview extends Disposable {
             break;
           case 'open-external':
             void this.openExternal();
+            break;
+          case 'print-request':
+            void printPdf(this.resource);
+            break;
+          case 'open-pdf-link':
+            void this.openPdfLink(parsedMessage.href);
             break;
           case 'appearance-theme':
             void vscode.workspace
@@ -374,12 +437,32 @@ export class PdfPreview extends Disposable {
     this.webviewEditor.webview.html = this.getWebviewContents();
   }
 
+  public get resourceUri(): vscode.Uri {
+    return this.resource;
+  }
+
   public async openSource(): Promise<void> {
     await this.openExternal();
   }
 
   public async openExternal(): Promise<void> {
     await vscode.env.openExternal(this.resource);
+  }
+
+  public async openPdfLink(href: string): Promise<void> {
+    const target = resolvePdfLinkTarget(this.resource, href);
+    if (!target) {
+      await vscode.window.showWarningMessage(
+        'Only relative local PDF links are supported.',
+      );
+      return;
+    }
+
+    await vscode.commands.executeCommand(
+      'vscode.openWith',
+      target,
+      'pdf-preview-next.preview',
+    );
   }
 
   public refresh(): void {
@@ -389,15 +472,12 @@ export class PdfPreview extends Disposable {
     }
   }
 
-  public print(): void {
-    if (!this.isDisposed) {
-      const message: HostToViewerMessage = { type: 'print' };
-      this.webviewEditor.webview.postMessage(message);
-    }
-  }
-
   public async resetViewState(): Promise<void> {
     await clearPdfPreviewViewState(this.workspaceState, this.resource);
+    if (!this.isDisposed) {
+      const message: HostToViewerMessage = { type: 'reset-view-state' };
+      await this.webviewEditor.webview.postMessage(message);
+    }
   }
 
   private scheduleReload(): void {

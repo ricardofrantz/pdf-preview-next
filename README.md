@@ -42,6 +42,7 @@ execution disabled.
 - `pdf-preview.reload.debounceMs`
 - `pdf-preview.appearance.theme` (resource-scoped)
 - `pdf-preview.appearance.pageGap` (resource-scoped)
+- `pdf-preview.printCommand` (resource-scoped)
 
 Resource-scoped settings can be overridden per workspace folder or PDF resource
 where VS Code supports resource configuration. Reload settings remain global
@@ -67,7 +68,8 @@ uses the same safe rendering path as `night`.
 - `vscode-pdf Next: Open Externally` opens the active PDF preview with the
   system PDF handler.
 - `vscode-pdf Next: Refresh Preview` refreshes the active PDF preview.
-- `vscode-pdf Next: Print` prints the active PDF preview.
+- `vscode-pdf Next: Print to System` sends the active PDF to `lp` or to the
+  configured print command, falling back to the system PDF handler.
 - `PDF Preview Next: Reset View State` clears the saved page, zoom, scroll, and
   outline-sidebar state for the active PDF only.
 - The toolbar `External` button opens the PDF with the system PDF handler.
@@ -77,9 +79,11 @@ uses the same safe rendering path as `night`.
   an outline.
 - The toolbar `Refresh` button and `Ctrl+R` / `Cmd+R` refresh the current PDF
   without losing the current page, zoom, scroll, or outline-sidebar state.
-- The toolbar `Print` button uses the webview print path when VS Code exposes
-  it. If the print dialog is unavailable, open the PDF externally and print from
-  the system PDF viewer.
+- The toolbar `Print` button uses the same host-side system print path as the
+  command.
+- Relative links from one local PDF to another local `.pdf` in the same folder
+  tree open with this viewer and preserve fragments such as `#page=2`. External
+  web links keep the PDF.js default behavior.
 - Inside the viewer, `j/k/h/l` scroll, `n/p` or `./,` move pages, `g/G` jump to
   first/last page, and `+/-` zoom.
 
@@ -128,7 +132,9 @@ To make VS Code use this viewer for PDFs:
    `npm run package`.
 
 ## Change log
+
 See [CHANGELOG.md](CHANGELOG.md).
 
 ## License
+
 Please see [LICENSE](./LICENSE)

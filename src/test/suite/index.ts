@@ -6,8 +6,10 @@ import {
   PDF_VIEWER_BODY,
   clearPdfPreviewViewState,
   renderPdfPreviewHtml,
+  resolvePdfLinkTarget,
   webviewLocalResourceRoots,
 } from '../../pdfPreview';
+import { parsePrintCommand } from '../../print';
 import {
   parseViewerToHostMessage,
   persistedViewStateOrUndefined,
@@ -41,6 +43,32 @@ function assertWebviewContract(): void {
   });
   assert.strictEqual(
     parseViewerToHostMessage({ type: 'open-external', extra: true }),
+    undefined,
+  );
+  assert.deepStrictEqual(parseViewerToHostMessage({ type: 'print-request' }), {
+    type: 'print-request',
+  });
+  assert.strictEqual(
+    parseViewerToHostMessage({ type: 'print-request', extra: true }),
+    undefined,
+  );
+  assert.deepStrictEqual(
+    parseViewerToHostMessage({
+      type: 'open-pdf-link',
+      href: 'link-target.pdf#page=2',
+    }),
+    { type: 'open-pdf-link', href: 'link-target.pdf#page=2' },
+  );
+  assert.strictEqual(
+    parseViewerToHostMessage({ type: 'open-pdf-link', href: '' }),
+    undefined,
+  );
+  assert.strictEqual(
+    parseViewerToHostMessage({
+      type: 'open-pdf-link',
+      href: 'link-target.pdf',
+      extra: true,
+    }),
     undefined,
   );
   assert.deepStrictEqual(
@@ -129,6 +157,52 @@ function assertWebviewContract(): void {
   assert.strictEqual(
     stateKey,
     'pdf-preview-next.view-state:file:///workspace/document.pdf',
+  );
+}
+
+function assertLinkAndPrintHelpers(): void {
+  const source = vscode.Uri.file('/workspace/docs/source.pdf');
+  const target = resolvePdfLinkTarget(source, 'link-target.pdf#page=2');
+  assert.ok(target, 'Relative PDF target should resolve.');
+  assert.strictEqual(target.fsPath, '/workspace/docs/link-target.pdf');
+  assert.strictEqual(target.fragment, 'page=2');
+
+  const spacedTarget = resolvePdfLinkTarget(
+    source,
+    'nested/linked%20target.PDF#nameddest=Figure1',
+  );
+  assert.ok(spacedTarget, 'Encoded PDF target should resolve.');
+  assert.strictEqual(
+    spacedTarget.fsPath,
+    '/workspace/docs/nested/linked target.PDF',
+  );
+  assert.strictEqual(spacedTarget.fragment, 'nameddest=Figure1');
+
+  assert.strictEqual(resolvePdfLinkTarget(source, '../outside.pdf'), undefined);
+  assert.strictEqual(
+    resolvePdfLinkTarget(source, '/tmp/outside.pdf'),
+    undefined,
+  );
+  assert.strictEqual(
+    resolvePdfLinkTarget(source, 'https://example.com/file.pdf'),
+    undefined,
+  );
+  assert.strictEqual(resolvePdfLinkTarget(source, 'notes.txt'), undefined);
+
+  assert.deepStrictEqual(
+    parsePrintCommand('lp -d "Office Printer" {{file}}', '/tmp/a b.pdf'),
+    {
+      command: 'lp',
+      args: ['-d', 'Office Printer', '/tmp/a b.pdf'],
+    },
+  );
+  assert.deepStrictEqual(parsePrintCommand('open -a Preview', '/tmp/a b.pdf'), {
+    command: 'open',
+    args: ['-a', 'Preview', '/tmp/a b.pdf'],
+  });
+  assert.strictEqual(
+    parsePrintCommand('lp -d "unfinished', '/tmp/a b.pdf'),
+    undefined,
   );
 }
 
@@ -251,10 +325,18 @@ async function assertCheckedInFixtures(
   const brokenBytes = await vscode.workspace.fs.readFile(
     vscode.Uri.joinPath(fixtureDir, 'broken.pdf'),
   );
+  const linkSourceBytes = await vscode.workspace.fs.readFile(
+    vscode.Uri.joinPath(fixtureDir, 'link-source.pdf'),
+  );
+  const linkTargetBytes = await vscode.workspace.fs.readFile(
+    vscode.Uri.joinPath(fixtureDir, 'link-target.pdf'),
+  );
 
   const outlineText = Buffer.from(outlineBytes).toString('latin1');
   const passwordText = Buffer.from(passwordBytes).toString('latin1');
   const brokenText = Buffer.from(brokenBytes).toString('latin1');
+  const linkSourceText = Buffer.from(linkSourceBytes).toString('latin1');
+  const linkTargetText = Buffer.from(linkTargetBytes).toString('latin1');
 
   assert.match(outlineText, /^%PDF-1\.4/);
   assert.match(outlineText, /\/Outlines 8 0 R/);
@@ -271,6 +353,16 @@ async function assertCheckedInFixtures(
     brokenBytes.byteLength < outlineBytes.byteLength,
     'Broken fixture should be a truncated variant of the outline fixture.',
   );
+
+  assert.match(linkSourceText, /^%PDF-1\.4/);
+  assert.match(linkSourceText, /link-target\.pdf#page=2/);
+  assert.match(linkSourceText, /https:\/\/example\.com\//);
+  assert.match(linkSourceText, /%%EOF\s*$/);
+
+  assert.match(linkTargetText, /^%PDF-1\.4/);
+  assert.match(linkTargetText, /\/Count 2/);
+  assert.match(linkTargetText, /Link target page 2/);
+  assert.match(linkTargetText, /%%EOF\s*$/);
 }
 
 async function assertRuntimeConfigurationScope(
@@ -308,6 +400,7 @@ async function assertRuntimeConfigurationScope(
 
 export async function run(): Promise<void> {
   assertWebviewContract();
+  assertLinkAndPrintHelpers();
   assertWebviewHtmlHooks();
   assertDisposeAllKeepsDraining();
   await assertViewStateResetHelper();
@@ -362,6 +455,7 @@ export async function run(): Promise<void> {
     'pdf-preview.default.spreadMode',
     'pdf-preview.appearance.theme',
     'pdf-preview.appearance.pageGap',
+    'pdf-preview.printCommand',
   ];
   for (const setting of resourceScopedSettings) {
     assert.strictEqual(
@@ -387,6 +481,7 @@ export async function run(): Promise<void> {
       'pdf-preview.reload.debounceMs': 800,
       'pdf-preview.appearance.theme': 'auto',
       'pdf-preview.appearance.pageGap': 'normal',
+      'pdf-preview.printCommand': '',
     },
   );
 
@@ -426,6 +521,10 @@ export async function run(): Promise<void> {
     commandTitles.get('pdf-preview.resetViewState'),
     'PDF Preview Next: Reset View State',
   );
+  assert.strictEqual(
+    commandTitles.get('pdf-preview.print'),
+    'vscode-pdf Next: Print to System',
+  );
   assert.strictEqual(PDF_WEBVIEW_OPTIONS.retainContextWhenHidden, false);
 
   const webviewSourceText = await readExtensionFile(
@@ -456,6 +555,11 @@ export async function run(): Promise<void> {
     webviewSourceText,
     /case ['"]open-source['"]:[\s\S]*?void this\.openSource\(\);[\s\S]*?break;[\s\S]*?case ['"]open-external['"]:[\s\S]*?void this\.openExternal\(\);[\s\S]*?break;/,
     'Webview open-source and open-external messages must dispatch through separate host methods.',
+  );
+  assert.match(
+    webviewSourceText,
+    /function resolvePdfLinkTarget\([\s\S]*?fragment[\s\S]*?vscode\.Uri\.file\(targetPath\)\.with\(\{ fragment, query \}\)/,
+    'Inter-PDF links must resolve relative file targets while preserving fragments.',
   );
   assert.match(
     webviewSourceText,
@@ -617,15 +721,35 @@ export async function run(): Promise<void> {
     /const FIND_HIGHLIGHT_ALL_MIN_QUERY_LENGTH = 3;/,
     'Find should not highlight every match for very short queries.',
   );
+  const zeroPageGuardIndex = viewerScriptText.indexOf(
+    'if (pdfDocument.numPages < 1)',
+  );
+  const setDocumentIndex = viewerScriptText.indexOf(
+    'this.linkService.setDocument(pdfDocument',
+  );
+  assert.ok(
+    zeroPageGuardIndex > 0 && zeroPageGuardIndex < setDocumentIndex,
+    'Zero-page corrupted PDFs must error before being handed to the viewer.',
+  );
+  assert.match(
+    viewerScriptText,
+    /if \(pdfDocument\.numPages < 1\) {\s*await pdfDocument\.destroy\(\);\s*throw new Error\('PDF has no pages\.'\);/s,
+    'Broken fixtures should surface a load error without waiting for page render timeout.',
+  );
   assert.match(
     viewerScriptText,
     /const FIND_HIGHLIGHT_ALL_MAX_PAGES = 50;/,
     'Find should not highlight all matches across large documents.',
   );
-  assert.match(
+  assert.doesNotMatch(
     viewerScriptText,
-    /if \(batch\.length >= PRINT_RENDER_BATCH_SIZE\) {\s*await Promise\.all\(batch\);/s,
-    'Print preparation should render pages in bounded batches.',
+    /window\.print\s*\(/,
+    'Viewer must not rely on browser print dialog.',
+  );
+  assert.doesNotMatch(
+    viewerScriptText,
+    /printDocument\s*\(/,
+    'Viewer must not contain legacy printDocument method.',
   );
   const polyfillsImportIndex = viewerScriptText.indexOf(
     "import './polyfills.mjs';",
@@ -701,6 +825,16 @@ export async function run(): Promise<void> {
   );
   assert.match(
     viewerScriptText,
+    /event\.data\?\.type === ['"]reset-view-state['"][\s\S]*?this\.resetViewState\(\)/,
+    'Reset view state command must notify the active viewer.',
+  );
+  assert.match(
+    viewerScriptText,
+    /resetViewState\(\)\s*{[\s\S]*?clearTimeout\(this\.persistViewStateTimer\);[\s\S]*?this\.config\.initialViewState = null;[\s\S]*?restoreView: false,[\s\S]*?userInitiated: true,/,
+    'Active viewer reset must ignore saved startup state and reload from defaults.',
+  );
+  assert.match(
+    viewerScriptText,
     /addEventListener\('DOMContentLoaded', startApp/,
   );
 
@@ -719,6 +853,88 @@ export async function run(): Promise<void> {
     providerSourceText,
     /openSourceForActivePreview\(\)[\s\S]*?preview\.openExternal\(\)/,
     'Open Source command should not bypass PdfPreview.openSource.',
+  );
+  assert.match(
+    providerSourceText,
+    /printPdf\(/,
+    'Print command must dispatch through the host-side print utility.',
+  );
+
+  const printSourceText = await readExtensionFile(
+    extension,
+    'out',
+    'src',
+    'print.js',
+  );
+  assert.match(
+    printSourceText,
+    /spawnAsync\('lp',/,
+    'Print utility must try lp first.',
+  );
+  assert.match(
+    printSourceText,
+    /openExternal\(resource\)/,
+    'Print utility must fall back to system viewer.',
+  );
+  assert.match(
+    printSourceText,
+    /\{\{file\}\}/,
+    'Print utility must support custom command placeholder substitution.',
+  );
+  assert.match(
+    printSourceText,
+    /spawn\(command, args, \{ stdio: ['"]ignore['"] \}\)/,
+    'Print utility must execute custom commands without a shell.',
+  );
+
+  const webviewContractSourceText = await readExtensionFile(
+    extension,
+    'out',
+    'src',
+    'webviewContract.js',
+  );
+  assert.match(
+    webviewContractSourceText,
+    /open-pdf-link/,
+    'Webview contract must include open-pdf-link message type.',
+  );
+
+  const previewSourceText = await readExtensionFile(
+    extension,
+    'out',
+    'src',
+    'pdfPreview.js',
+  );
+  assert.match(
+    previewSourceText,
+    /openPdfLink\(/,
+    'PdfPreview must implement openPdfLink handler.',
+  );
+  assert.match(
+    previewSourceText,
+    /case ['"]open-pdf-link['"]:[\s\S]*?void this\.openPdfLink\(/,
+    'Webview open-pdf-link message must dispatch through PdfPreview.openPdfLink.',
+  );
+  assert.match(
+    previewSourceText,
+    /resetViewState\(\)[\s\S]*?clearPdfPreviewViewState\([\s\S]*?type: ['"]reset-view-state['"][\s\S]*?postMessage\(message\)/,
+    'Reset view state must clear storage and tell the active webview to reset immediately.',
+  );
+
+  assert.match(
+    viewerScriptText,
+    /open-pdf-link/,
+    'Viewer script must handle open-pdf-link messages.',
+  );
+  assert.match(
+    viewerScriptText,
+    /function isRelativePdfHref\(href\)[\s\S]*?split\(['"]#['"], 1\)[\s\S]*?endsWith\(['"]\.pdf['"]\)/,
+    'Viewer link interception must preserve PDF fragments before posting open-pdf-link.',
+  );
+  assert.doesNotMatch(
+    viewerScriptText,
+    /mozdisallowselectionprint/,
+    'Viewer HTML must not contain legacy mozdisallowselectionprint attribute.',
   );
 
   const polyfillsScriptText = await readExtensionFile(
