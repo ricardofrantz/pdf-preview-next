@@ -14,7 +14,7 @@
 - Record the pre-bundling baseline for comparison:
   `pdf-preview-next-1.9.0.vsix` packaged 138 entries and was 1,529,171 bytes
   (1.46 MiB). The bundled `pdf-preview-next-1.10.0.vsix` packages 133 entries
-  and is 1,525,689 bytes (1.45 MiB).
+  and remains about 1.46 MiB.
 - Harden release automation with SHA-pinned GitHub Actions, workflow
   concurrency groups, and a `marketplace-publish` environment gate before VS
   Code Marketplace or Open VSX publishing can use configured secrets.
