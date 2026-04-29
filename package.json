@@ -183,11 +183,13 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run bundle",
     "compile": "tsc -p ./",
     "bundle": "node ./esbuild.config.mjs",
     "typecheck": "tsc --noEmit -p ./",
-    "watch": "tsc -w -p ./",
+    "watch": "node ./tools/watch_build.mjs",
+    "watch:tsc": "tsc -w -p ./",
+    "watch:bundle": "node ./esbuild.config.mjs --watch",
     "pretest": "npm run compile && npm run test:compat",
     "test": "node ./out/src/test/runTest.js",
     "test:compat": "node ./tools/check_pdfjs_runtime_compat.mjs",
