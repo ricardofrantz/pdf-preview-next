@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.7.0 (2026/04/29)
+
 - Add host-side system printing for the toolbar and command path, with an
   optional no-shell `pdf-preview.printCommand` override.
 - Add local inter-PDF link handling for relative `.pdf` links, preserving
