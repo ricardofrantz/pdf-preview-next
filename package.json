@@ -190,7 +190,7 @@
     "watch": "node ./tools/watch_build.mjs",
     "watch:tsc": "tsc -w -p ./",
     "watch:bundle": "node ./esbuild.config.mjs --watch",
-    "pretest": "npm run compile && npm run test:compat",
+    "pretest": "npm run compile && npm run bundle && npm run test:compat",
     "test": "node ./out/src/test/runTest.js",
     "test:compat": "node ./tools/check_pdfjs_runtime_compat.mjs",
     "lint": "eslint ./src",
