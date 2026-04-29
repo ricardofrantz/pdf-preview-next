@@ -224,6 +224,11 @@ function assertWebviewHtmlHooks(): void {
   );
   assert.match(
     PDF_VIEWER_BODY,
+    /<button id="thumbnailPanelTab"[^>]*role="tab"[^>]*aria-selected="false"[^>]*aria-controls="thumbnailPanel">Thumbnails<\/button>/,
+    'Viewer body hook should expose the thumbnail sidebar tab.',
+  );
+  assert.match(
+    PDF_VIEWER_BODY,
     /<section id="thumbnailPanel"[^>]*class="sidebar-panel thumbnail-panel hidden"[^>]*aria-label="Page thumbnails"[^>]*hidden>[\s\S]*?<div id="thumbnailList" class="thumbnail-list" role="list" aria-label="Page thumbnails"><\/div>/,
     'Viewer body hook should expose the thumbnail sidebar shell.',
   );
@@ -391,6 +396,7 @@ async function assertRuntimeConfigurationScope(
     'default.cursor',
     'default.scale',
     'default.sidebar',
+    'default.sidebarPanel',
     'default.scrollMode',
     'default.spreadMode',
     'appearance.pageGap',
@@ -478,6 +484,16 @@ export async function run(): Promise<void> {
     .getConfiguration('pdf-preview')
     .get<boolean>('default.sidebar');
   assert.strictEqual(sidebarDefault, false);
+  const sidebarPanelDefault = vscode.workspace
+    .getConfiguration('pdf-preview')
+    .get<string>('default.sidebarPanel');
+  assert.strictEqual(sidebarPanelDefault, 'outline');
+  assert.deepStrictEqual(
+    extension.packageJSON.contributes.configuration.properties[
+      'pdf-preview.default.sidebarPanel'
+    ].enum,
+    ['outline', 'thumbnails'],
+  );
 
   const closeOnDelete = vscode.workspace
     .getConfiguration('pdf-preview')
@@ -512,6 +528,7 @@ export async function run(): Promise<void> {
     'pdf-preview.default.cursor',
     'pdf-preview.default.scale',
     'pdf-preview.default.sidebar',
+    'pdf-preview.default.sidebarPanel',
     'pdf-preview.default.scrollMode',
     'pdf-preview.default.spreadMode',
     'pdf-preview.appearance.theme',
@@ -536,6 +553,7 @@ export async function run(): Promise<void> {
       'pdf-preview.default.cursor': 'select',
       'pdf-preview.default.scale': 'auto',
       'pdf-preview.default.sidebar': false,
+      'pdf-preview.default.sidebarPanel': 'outline',
       'pdf-preview.default.scrollMode': 'vertical',
       'pdf-preview.default.spreadMode': 'none',
       'pdf-preview.reload.closeOnDelete': false,
@@ -740,6 +758,16 @@ export async function run(): Promise<void> {
     viewerStylesText,
     /@container\s*\(max-width:\s*720px\)[^{]*{[^}]*\.label[^}]*display:\s*none/,
     '@container query must hide .label at 720px breakpoint',
+  );
+  assert.match(
+    viewerStylesText,
+    /\.sidebar-tab\.is-active\s*{[^}]*background:\s*var\(--vscode-list-activeSelectionBackground\)/s,
+    'Sidebar panel tabs must expose active selection state.',
+  );
+  assert.match(
+    viewerStylesText,
+    /\.thumbnail-list\s*{[^}]*display:\s*flex;[^}]*flex-direction:\s*column/s,
+    'Thumbnail panel should stack page thumbnails vertically.',
   );
   assert.match(
     viewerStylesText,

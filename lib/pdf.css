@@ -228,6 +228,30 @@ body.theme-inverted {
   background: var(--vscode-sideBar-background, var(--vscode-editor-background));
 }
 
+.sidebar-tabs {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 4px;
+  padding: 8px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.sidebar-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 26px;
+  padding: 0 6px;
+  overflow: hidden;
+  color: var(--vscode-sideBar-foreground, var(--vscode-foreground));
+  background: transparent;
+  text-overflow: ellipsis;
+}
+
+.sidebar-tab.is-active {
+  background: var(--vscode-list-activeSelectionBackground);
+  color: var(--vscode-list-activeSelectionForeground);
+}
+
 .sidebar-panel {
   min-height: 0;
   overflow: auto;

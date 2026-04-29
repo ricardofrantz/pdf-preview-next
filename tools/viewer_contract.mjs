@@ -54,6 +54,11 @@ export function assertViewerContract({
   );
   assert.match(
     webviewSource,
+    /<div class="sidebar-tabs" role="tablist" aria-label="Sidebar panels">[\s\S]*?<button id="outlinePanelTab"[^>]*role="tab"[^>]*aria-selected="true"[^>]*aria-controls="outlinePanel">Outline<\/button>[\s\S]*?<button id="thumbnailPanelTab"[^>]*role="tab"[^>]*aria-selected="false"[^>]*aria-controls="thumbnailPanel">Thumbnails<\/button>/,
+    `${context}: viewer must include accessible sidebar panel tabs.`,
+  );
+  assert.match(
+    webviewSource,
     /<section id="thumbnailPanel"[^>]*class="sidebar-panel thumbnail-panel hidden"[^>]*aria-label="Page thumbnails"[^>]*hidden>[\s\S]*?<div id="thumbnailList" class="thumbnail-list" role="list" aria-label="Page thumbnails"><\/div>/,
     `${context}: viewer must include the thumbnail sidebar panel shell.`,
   );
@@ -116,6 +121,11 @@ export function assertViewerContract({
     stylesSource,
     /@container\s*\(max-width:\s*720px\)[^{]*{[^}]*\.label[^}]*display:\s*none/,
     `${context}: @container query must hide .label at 720px.`,
+  );
+  assert.match(
+    stylesSource,
+    /\.sidebar-tab\.is-active\s*{[^}]*background:\s*var\(--vscode-list-activeSelectionBackground\)/s,
+    `${context}: sidebar panel tabs must expose active selection state.`,
   );
   assert.match(
     stylesSource,

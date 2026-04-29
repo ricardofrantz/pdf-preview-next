@@ -36,6 +36,7 @@ execution disabled.
 - `pdf-preview.default.cursor` (resource-scoped)
 - `pdf-preview.default.scale` (resource-scoped)
 - `pdf-preview.default.sidebar` (resource-scoped)
+- `pdf-preview.default.sidebarPanel` (resource-scoped)
 - `pdf-preview.default.scrollMode` (resource-scoped)
 - `pdf-preview.default.spreadMode` (resource-scoped)
 - `pdf-preview.reload.closeOnDelete`
@@ -47,7 +48,9 @@ execution disabled.
 Resource-scoped settings can be overridden per workspace folder or PDF resource
 where VS Code supports resource configuration. Reload settings remain global
 because they control file-watcher behavior rather than document rendering
-defaults.
+defaults. `pdf-preview.default.sidebar` controls whether the sidebar opens by
+default; `pdf-preview.default.sidebarPanel` selects the initial panel (`outline`
+or `thumbnails`).
 
 Example dark page rendering:
 

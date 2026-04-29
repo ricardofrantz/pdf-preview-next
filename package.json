@@ -98,10 +98,20 @@
           "pattern": "^(\\d+(?:\\.\\d+)?|auto|page-actual|page-fit|page-width)$"
         },
         "pdf-preview.default.sidebar": {
-          "markdownDescription": "Open the document outline sidebar by default when the PDF has an outline.",
+          "markdownDescription": "Open the PDF sidebar by default when the active sidebar panel is available.",
           "type": "boolean",
           "scope": "resource",
           "default": false
+        },
+        "pdf-preview.default.sidebarPanel": {
+          "markdownDescription": "The sidebar panel to show when the PDF sidebar opens. `pdf-preview.default.sidebar` still controls whether the sidebar opens by default.",
+          "type": "string",
+          "scope": "resource",
+          "default": "outline",
+          "enum": [
+            "outline",
+            "thumbnails"
+          ]
         },
         "pdf-preview.default.scrollMode": {
           "markdownDescription": "The default scroll mode for preview.",

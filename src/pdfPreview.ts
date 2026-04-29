@@ -166,11 +166,15 @@ export const PDF_VIEWER_BODY = `<body>
     </header>
     <div id="pdf-content">
       <aside id="outlineSidebar" class="outline-sidebar hidden" aria-label="Document sidebar">
-        <section id="outlinePanel" class="sidebar-panel outline-panel" aria-label="Document outline">
+        <div class="sidebar-tabs" role="tablist" aria-label="Sidebar panels">
+          <button id="outlinePanelTab" class="sidebar-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="outlinePanel">Outline</button>
+          <button id="thumbnailPanelTab" class="sidebar-tab" type="button" role="tab" aria-selected="false" aria-controls="thumbnailPanel">Thumbnails</button>
+        </div>
+        <section id="outlinePanel" class="sidebar-panel outline-panel" role="tabpanel" aria-labelledby="outlinePanelTab" aria-label="Document outline">
           <div class="sidebar-header outline-header">Outline</div>
           <div id="outlineTree" class="outline-tree"></div>
         </section>
-        <section id="thumbnailPanel" class="sidebar-panel thumbnail-panel hidden" aria-label="Page thumbnails" hidden>
+        <section id="thumbnailPanel" class="sidebar-panel thumbnail-panel hidden" role="tabpanel" aria-labelledby="thumbnailPanelTab" aria-label="Page thumbnails" hidden>
           <div class="sidebar-header">Thumbnails</div>
           <div id="thumbnailList" class="thumbnail-list" role="list" aria-label="Page thumbnails"></div>
         </section>
@@ -545,6 +549,7 @@ export class PdfPreview extends Disposable {
         cursor: pdfConfig.get<string>('default.cursor'),
         scale: pdfConfig.get<string>('default.scale'),
         sidebar: pdfConfig.get<boolean>('default.sidebar'),
+        sidebarPanel: pdfConfig.get<string>('default.sidebarPanel'),
         scrollMode: pdfConfig.get<string>('default.scrollMode'),
         spreadMode: pdfConfig.get<string>('default.spreadMode'),
       },
