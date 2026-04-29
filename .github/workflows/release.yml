@@ -14,6 +14,10 @@ on:
         description: Verify and package only; skip GitHub Release and registry publishing.
         type: boolean
         default: true
+      confirm_publish:
+        description: Type "publish <tag>" to allow Marketplace/Open VSX publishing when dry_run is false.
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -24,7 +28,6 @@ concurrency:
 
 env:
   RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
-  DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
 
 jobs:
   release:
@@ -67,7 +70,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload GitHub release asset
-        if: env.DRY_RUN != 'true'
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == false && inputs.confirm_publish == format('publish {0}', inputs.release_tag) }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -80,13 +83,24 @@ jobs:
               --generate-notes
           fi
 
-      - name: Note release dry run
-        if: env.DRY_RUN == 'true'
+      - name: Note release verification-only run
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run == true || inputs.confirm_publish != format('publish {0}', inputs.release_tag) }}
         run: |
-          echo "Dry run completed for $RELEASE_TAG; GitHub Release and registry publishing were skipped."
+          echo "Verification completed for $RELEASE_TAG; GitHub Release and registry publishing were skipped."
+
+  missing-publish-confirmation:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == false && inputs.confirm_publish != format('publish {0}', inputs.release_tag) }}
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Refuse unconfirmed publishing
+        run: |
+          echo "Refusing to publish $RELEASE_TAG. Re-run with dry_run=false and confirm_publish='publish $RELEASE_TAG'."
+          exit 1
 
   publish-marketplaces:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run == false }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == false && inputs.confirm_publish == format('publish {0}', inputs.release_tag) }}
     needs: release
     runs-on: ubuntu-latest
     timeout-minutes: 10

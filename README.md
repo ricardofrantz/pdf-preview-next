@@ -122,9 +122,12 @@ Useful scripts:
 | `npm run package:scan -- <vsix>` | Verify release package contents and viewer contracts. |
 
 The release workflow is guarded for maintainers: third-party actions are pinned
-by full commit SHA, CI/release jobs use concurrency groups, and Marketplace/Open
-VSX publishing runs in the `marketplace-publish` GitHub environment. Configure
-that environment with required reviewers before adding publish tokens.
+by full commit SHA, CI/release jobs use concurrency groups, and tag pushes only
+verify/package the release. GitHub Release, Marketplace, and Open VSX publishing
+require a manual `workflow_dispatch` run with `dry_run=false`, a matching
+`confirm_publish` phrase, and approval through the `marketplace-publish` GitHub
+environment. Configure that environment with required reviewers before adding
+publish tokens.
 
 ## Upgrade PDF.js
 
