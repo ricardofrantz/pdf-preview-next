@@ -7,6 +7,8 @@ const forbiddenEntries = [
   /^extension\/\.github\//,
   /^extension\/\.beads\//,
   /^extension\/\.work\//,
+  /^extension\/out\/[^/]+ 2\//,
+  /^extension\/out\/(?:test|[^/]+\/test)\//,
   /^extension\/src\/test\/fixtures\//,
   /^extension\/src\//,
   /^extension\/test\//,

@@ -6,7 +6,8 @@
 *.tgz
 *.vsix
 out/test/**
-out/src/test/**
+out/**/test/**
+out/src 2/**
 test/**
 src/**
 src/test/fixtures/**
