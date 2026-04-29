@@ -12,9 +12,6 @@ jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    env:
-      OVSX_PAT: ${{ secrets.OVSX_PAT }}
-      VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
     steps:
       - name: Check out repository
@@ -43,6 +40,13 @@ jobs:
           npx @vscode/vsce package --out "pdf-preview-next-${VERSION}.vsix"
           node ./tools/scan_vsix.mjs "pdf-preview-next-${VERSION}.vsix"
 
+      - name: Upload VSIX artifact for guarded publishing
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdf-preview-next-vsix
+          path: pdf-preview-next-*.vsix
+          if-no-files-found: error
+
       - name: Upload GitHub release asset
         env:
           GH_TOKEN: ${{ github.token }}
@@ -55,6 +59,27 @@ jobs:
               --title "$GITHUB_REF_NAME" \
               --generate-notes
           fi
+
+  publish-marketplaces:
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    # Configure this environment with required reviewers in GitHub repository settings.
+    environment:
+      name: marketplace-publish
+      url: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}
+    env:
+      OVSX_PAT: ${{ secrets.OVSX_PAT }}
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+    steps:
+      - name: Download VSIX artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pdf-preview-next-vsix
+          path: .
 
       - name: Publish to VS Code Marketplace
         if: env.VSCE_PAT != ''
