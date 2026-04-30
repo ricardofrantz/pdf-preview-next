@@ -905,6 +905,11 @@ export async function run(): Promise<void> {
   );
   assert.match(
     viewerScriptText,
+    /candidateDocument[\s\S]*?!acceptedDocument[\s\S]*?candidateDocument !== this\.pdfDocument[\s\S]*?await candidateDocument\.destroy\(\)/,
+    'Rejected replacement documents must be destroyed after rollback.',
+  );
+  assert.match(
+    viewerScriptText,
     /new IntersectionObserver\([\s\S]*?root: this\.elements\.thumbnailPanel/,
     'Thumbnail rendering should be IntersectionObserver-driven.',
   );

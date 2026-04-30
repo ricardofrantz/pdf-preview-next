@@ -211,6 +211,11 @@ export function assertViewerContract({
     );
     assert.match(
       viewerScriptSource,
+      /candidateDocument[\s\S]*?!acceptedDocument[\s\S]*?candidateDocument !== this\.pdfDocument[\s\S]*?await candidateDocument\.destroy\(\)/,
+      `${context}: rejected replacement documents must be destroyed after rollback.`,
+    );
+    assert.match(
+      viewerScriptSource,
       /new IntersectionObserver\([\s\S]*?root: this\.elements\.thumbnailPanel/,
       `${context}: thumbnail rendering must be driven by sidebar visibility, not all pages at once.`,
     );
