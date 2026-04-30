@@ -15,15 +15,15 @@ on:
         type: boolean
         default: true
       confirm_publish:
-        description: Type "publish <tag>" to allow Marketplace/Open VSX publishing when dry_run is false.
+        description: Type "publish <tag>" to allow GitHub Release, Marketplace, and Open VSX publishing when dry_run is false.
         required: false
         default: ''
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
   cancel-in-progress: false
 
 env:
@@ -35,14 +35,33 @@ jobs:
     timeout-minutes: 25
 
     steps:
-      - name: Check out repository
+      - name: Check out release tag
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          fetch-depth: 0
 
       - name: Set up Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
+
+      - name: Validate release tag and package version
+        run: |
+          git fetch --force --tags
+          VERSION="${RELEASE_TAG#v}"
+          TAG_COMMIT="$(git rev-list -n 1 "$RELEASE_TAG")"
+          HEAD_COMMIT="$(git rev-parse HEAD)"
+          if [ "$HEAD_COMMIT" != "$TAG_COMMIT" ]; then
+            echo "Checked-out commit $HEAD_COMMIT does not match $RELEASE_TAG ($TAG_COMMIT)."
+            exit 1
+          fi
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          if [ "$PACKAGE_VERSION" != "$VERSION" ]; then
+            echo "package.json version $PACKAGE_VERSION does not match release tag $RELEASE_TAG."
+            exit 1
+          fi
 
       - name: Install dependencies
         run: npm ci
@@ -59,7 +78,7 @@ jobs:
       - name: Package VSIX
         run: |
           VERSION="${RELEASE_TAG#v}"
-          npx @vscode/vsce package --out "pdf-preview-next-${VERSION}.vsix"
+          npm run package -- --out "pdf-preview-next-${VERSION}.vsix"
           node ./tools/scan_vsix.mjs "pdf-preview-next-${VERSION}.vsix"
 
       - name: Upload VSIX artifact for guarded publishing
@@ -68,20 +87,6 @@ jobs:
           name: pdf-preview-next-vsix
           path: pdf-preview-next-*.vsix
           if-no-files-found: error
-
-      - name: Upload GitHub release asset
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == false && inputs.confirm_publish == format('publish {0}', inputs.release_tag) }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          VSIX="$(ls pdf-preview-next-*.vsix | head -n 1)"
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release upload "$RELEASE_TAG" "$VSIX" --clobber
-          else
-            gh release create "$RELEASE_TAG" "$VSIX" \
-              --title "$RELEASE_TAG" \
-              --generate-notes
-          fi
 
       - name: Note release verification-only run
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run == true || inputs.confirm_publish != format('publish {0}', inputs.release_tag) }}
@@ -99,46 +104,77 @@ jobs:
           echo "Refusing to publish $RELEASE_TAG. Re-run with dry_run=false and confirm_publish='publish $RELEASE_TAG'."
           exit 1
 
-  publish-marketplaces:
+  publish:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == false && inputs.confirm_publish == format('publish {0}', inputs.release_tag) }}
     needs: release
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     permissions:
-      contents: read
+      contents: write
     # Configure this environment with required reviewers in GitHub repository settings.
     environment:
       name: marketplace-publish
-      url: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
-    env:
-      OVSX_PAT: ${{ secrets.OVSX_PAT }}
-      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      url: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ inputs.release_tag }}
 
     steps:
+      - name: Check out release tag
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ inputs.release_tag }}
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked publish tooling
+        run: npm ci
+
       - name: Download VSIX artifact
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: pdf-preview-next-vsix
           path: .
 
+      - name: Verify downloaded VSIX
+        run: |
+          VSIX="$(ls pdf-preview-next-*.vsix | head -n 1)"
+          node ./tools/scan_vsix.mjs "$VSIX"
+
+      - name: Upload GitHub release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VSIX="$(ls pdf-preview-next-*.vsix | head -n 1)"
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" "$VSIX" --clobber
+          else
+            gh release create "$RELEASE_TAG" "$VSIX" \
+              --verify-tag \
+              --title "$RELEASE_TAG" \
+              --generate-notes
+          fi
+
       - name: Publish to VS Code Marketplace
-        if: env.VSCE_PAT != ''
-        run: |
-          VSIX="$(ls pdf-preview-next-*.vsix | head -n 1)"
-          npx @vscode/vsce publish --packagePath "$VSIX" -p "$VSCE_PAT"
-
-      - name: Publish to Open VSX
-        if: env.OVSX_PAT != ''
-        run: |
-          VSIX="$(ls pdf-preview-next-*.vsix | head -n 1)"
-          npx --yes ovsx publish "$VSIX" -p "$OVSX_PAT"
-
-      - name: Note skipped registry publishing
-        if: env.VSCE_PAT == '' || env.OVSX_PAT == ''
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
           if [ -z "$VSCE_PAT" ]; then
             echo "VS Code Marketplace publish skipped: VSCE_PAT is not configured."
+            exit 0
           fi
+          VSIX="$(ls pdf-preview-next-*.vsix | head -n 1)"
+          ./node_modules/.bin/vsce publish --packagePath "$VSIX" -p "$VSCE_PAT"
+
+      - name: Publish to Open VSX
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
           if [ -z "$OVSX_PAT" ]; then
             echo "Open VSX publish skipped: OVSX_PAT is not configured."
+            exit 0
           fi
+          VSIX="$(ls pdf-preview-next-*.vsix | head -n 1)"
+          ./node_modules/.bin/ovsx publish "$VSIX" -p "$OVSX_PAT"
