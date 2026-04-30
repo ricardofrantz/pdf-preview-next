@@ -108,7 +108,7 @@ npm ci
 npm run typecheck
 npm run lint
 npm test
-npm run package -- --no-dependencies --allow-package-all-secrets --allow-package-env-file
+npm run package -- --no-dependencies
 npm run package:scan -- pdf-preview-next-2.0.0.vsix
 ```
 

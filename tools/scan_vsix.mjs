@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, statSync } from 'node:fs';
-import { basename, join } from 'node:path';
+import { basename, join, posix } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { assertViewerContract } from './viewer_contract.mjs';
 
@@ -14,6 +14,9 @@ export const forbiddenEntries = [
   /^extension\/test\//,
   /^extension\/tools\//,
   /^extension\/node_modules\//,
+  /(^|\/)\.env(?:$|[./])/i,
+  /(^|\/)\.npmrc$/i,
+  /\.(?:key|p12|pfx|pem)$/i,
   /(^|\/)(?:plan(?:_[^/]*)?|PLAN|GEMINI|KIMI|AGENTS|CLAUDE|SECURITY)\.md$/i,
   /(^|\/)(?:scratch|tmp|temp)(?:\.|\/)/i,
   /(^|\/)debugger\.(?:js|css)$/i,
@@ -44,6 +47,37 @@ export function findForbiddenEntries(entries) {
 export function findMissingRequiredEntries(entries) {
   const entrySet = new Set(entries);
   return requiredEntries.filter((entry) => !entrySet.has(entry));
+}
+
+export function expectedPackageMainEntry(packageJsonSource) {
+  const packageJson = JSON.parse(packageJsonSource);
+  const packageMain = packageJson.main;
+  if (typeof packageMain !== 'string' || packageMain.trim() === '') {
+    throw new Error('extension/package.json must define a string main entry.');
+  }
+
+  const normalized = posix.normalize(packageMain.replace(/\\/g, '/'));
+  const relativeMain = normalized.replace(/^\.\//, '');
+  if (
+    posix.isAbsolute(relativeMain) ||
+    relativeMain === '..' ||
+    relativeMain.startsWith('../')
+  ) {
+    throw new Error(`extension/package.json main is not package-relative: ${packageMain}`);
+  }
+
+  return `extension/${relativeMain}`;
+}
+
+export function findMissingPackageMainEntry(entries, packageJsonSource) {
+  const mainEntry = expectedPackageMainEntry(packageJsonSource);
+  return entries.includes(mainEntry) ? [] : [mainEntry];
+}
+
+function messageFromError(error) {
+  return error && typeof error === 'object' && 'message' in error
+    ? error.message
+    : String(error);
 }
 
 function newestVsix() {
@@ -104,6 +138,24 @@ function main() {
   if (missingEntries.length > 0) {
     console.error(`Required runtime files missing from ${basename(vsixPath)}:`);
     for (const entry of missingEntries) {
+      console.error(`- ${entry}`);
+    }
+    process.exit(1);
+  }
+
+  let packageJsonSource;
+  let missingMainEntries;
+  try {
+    packageJsonSource = readVsixEntry(vsixPath, 'extension/package.json');
+    missingMainEntries = findMissingPackageMainEntry(entries, packageJsonSource);
+  } catch (error) {
+    console.error(`Could not verify extension/package.json main in ${basename(vsixPath)}.`);
+    console.error(messageFromError(error));
+    process.exit(1);
+  }
+  if (missingMainEntries.length > 0) {
+    console.error(`Packaged extension main is missing from ${basename(vsixPath)}:`);
+    for (const entry of missingMainEntries) {
       console.error(`- ${entry}`);
     }
     process.exit(1);

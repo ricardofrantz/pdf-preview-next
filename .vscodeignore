@@ -5,6 +5,12 @@
 .work/**
 *.tgz
 *.vsix
+.env*
+.npmrc
+*.pem
+*.key
+*.p12
+*.pfx
 out/**
 test/**
 src/**
