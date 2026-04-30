@@ -196,8 +196,18 @@ export function assertViewerContract({
     );
     assert.match(
       viewerScriptSource,
+      /removeQueuedThumbnail\(pageNumber\)[\s\S]*?shouldRenderQueuedThumbnail\(pageNumber\)/,
+      `${context}: thumbnail queue must drop stale off-screen work before rendering.`,
+    );
+    assert.match(
+      viewerScriptSource,
       /if \(this\.thumbnailRenderJobs\.get\(pageNumber\) === job\) {[\s\S]*?this\.thumbnailRenderJobs\.delete\(pageNumber\)/,
       `${context}: stale thumbnail render completions must not clear newer jobs.`,
+    );
+    assert.match(
+      viewerScriptSource,
+      /viewStatePersistenceSuspended[\s\S]*?flushPersistViewState\(\)[\s\S]*?this\.viewStatePersistenceSuspended \|\| !this\.pdfDocument/,
+      `${context}: view-state writes must be suspended while a refreshed document is hydrating.`,
     );
     assert.match(
       viewerScriptSource,

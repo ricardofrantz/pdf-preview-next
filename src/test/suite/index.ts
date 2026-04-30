@@ -890,8 +890,18 @@ export async function run(): Promise<void> {
   );
   assert.match(
     viewerScriptText,
+    /removeQueuedThumbnail\(pageNumber\)[\s\S]*?shouldRenderQueuedThumbnail\(pageNumber\)/,
+    'Thumbnail queue must drop stale off-screen work before rendering.',
+  );
+  assert.match(
+    viewerScriptText,
     /if \(this\.thumbnailRenderJobs\.get\(pageNumber\) === job\) {[\s\S]*?this\.thumbnailRenderJobs\.delete\(pageNumber\)/,
     'Stale thumbnail render completions must not clear newer render jobs.',
+  );
+  assert.match(
+    viewerScriptText,
+    /viewStatePersistenceSuspended[\s\S]*?flushPersistViewState\(\)[\s\S]*?this\.viewStatePersistenceSuspended \|\| !this\.pdfDocument/,
+    'View-state writes must be suspended while a refreshed document is hydrating.',
   );
   assert.match(
     viewerScriptText,
@@ -929,24 +939,33 @@ export async function run(): Promise<void> {
   const pdfCoreImportIndex = viewerScriptText.indexOf(
     "import * as pdfjsLib from './pdfjs/build/pdf.min.mjs';",
   );
+  const pdfWorkerImportIndex = viewerScriptText.indexOf(
+    "import * as pdfjsWorker from './pdfjs/build/pdf.worker.min.mjs';",
+  );
   const viewerImportIndex = viewerScriptText.indexOf(
     "await import('./pdfjs/web/pdf_viewer.mjs')",
   );
   assert.ok(polyfillsImportIndex >= 0, 'PDF.js polyfills must load first.');
   assert.ok(pdfCoreImportIndex >= 0, 'PDF.js core must load first.');
+  assert.ok(pdfWorkerImportIndex >= 0, 'PDF.js worker module must load.');
   assert.ok(
     polyfillsImportIndex < pdfCoreImportIndex,
     'PDF.js polyfills must evaluate before PDF.js core.',
   );
   assert.ok(
-    viewerImportIndex > pdfCoreImportIndex,
-    'PDF.js viewer must load after PDF.js core.',
+    pdfWorkerImportIndex > pdfCoreImportIndex,
+    'PDF.js worker module must load after PDF.js core.',
+  );
+  assert.ok(
+    viewerImportIndex > pdfWorkerImportIndex,
+    'PDF.js viewer must load after the worker module is exposed.',
   );
   assert.ok(
     polyfillsImportIndex < viewerImportIndex,
     'PDF.js polyfills must evaluate before PDF.js viewer.',
   );
   assert.match(viewerScriptText, /globalThis\.pdfjsLib = pdfjsLib/);
+  assert.match(viewerScriptText, /globalThis\.pdfjsWorker = pdfjsWorker/);
   assert.doesNotMatch(
     viewerScriptText,
     /from '.\/pdfjs\/web\/pdf_viewer\.mjs'/,
@@ -1126,6 +1145,7 @@ export async function run(): Promise<void> {
   );
   assert.match(polyfillsScriptText, /Map\.prototype\.getOrInsertComputed/);
   assert.match(polyfillsScriptText, /WeakMap\.prototype\.getOrInsertComputed/);
+  assert.match(polyfillsScriptText, /RegExp\.escape/);
   await assertPolyfillsWork(extension);
 
   const pdfViewerSourceText = await readExtensionFile(
@@ -1140,6 +1160,13 @@ export async function run(): Promise<void> {
       polyfillsScriptText,
       /getOrInsertComputed/,
       'PDF.js viewer uses getOrInsertComputed, so the extension must ship the polyfill.',
+    );
+  }
+  if (pdfViewerSourceText.includes('RegExp.escape')) {
+    assert.match(
+      polyfillsScriptText,
+      /RegExp\.escape/,
+      'PDF.js viewer uses RegExp.escape, so the extension must ship the polyfill.',
     );
   }
 

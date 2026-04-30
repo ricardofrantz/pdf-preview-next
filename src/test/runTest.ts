@@ -15,8 +15,9 @@ async function main(): Promise<void> {
     // The path to the extension test script
     // Passed to --extensionTestsPath
     const extensionTestsPath = path.resolve(__dirname, './suite/index');
+    const vscodeVersion = process.env.VSCODE_TEST_VERSION ?? '1.95.0';
     const vscodeExecutablePath = resolveCliPathFromVSCodeExecutablePath(
-      await downloadAndUnzipVSCode(),
+      await downloadAndUnzipVSCode(vscodeVersion),
     );
 
     await runTests({

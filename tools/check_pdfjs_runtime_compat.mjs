@@ -13,6 +13,9 @@ const polyfillsImportIndex = mainSource.indexOf("import './polyfills.mjs';");
 const pdfCoreImportIndex = mainSource.indexOf(
   "import * as pdfjsLib from './pdfjs/build/pdf.min.mjs';",
 );
+const pdfWorkerImportIndex = mainSource.indexOf(
+  "import * as pdfjsWorker from './pdfjs/build/pdf.worker.min.mjs';",
+);
 const viewerImportIndex = mainSource.indexOf(
   "await import('./pdfjs/web/pdf_viewer.mjs')",
 );
@@ -22,10 +25,23 @@ assert.ok(
   'lib/main.mjs must import lib/polyfills.mjs.',
 );
 assert.ok(pdfCoreImportIndex >= 0, 'lib/main.mjs must import PDF.js core.');
+assert.ok(pdfWorkerImportIndex >= 0, 'lib/main.mjs must import PDF.js worker.');
 assert.ok(viewerImportIndex >= 0, 'lib/main.mjs must import PDF.js viewer.');
 assert.ok(
   polyfillsImportIndex < pdfCoreImportIndex,
   'lib/polyfills.mjs must evaluate before PDF.js core.',
+);
+assert.ok(
+  polyfillsImportIndex < pdfWorkerImportIndex,
+  'lib/polyfills.mjs must evaluate before PDF.js worker.',
+);
+assert.ok(
+  pdfCoreImportIndex < pdfWorkerImportIndex,
+  'PDF.js core should load before the worker module is exposed.',
+);
+assert.ok(
+  pdfWorkerImportIndex < viewerImportIndex,
+  'PDF.js worker must be exposed before PDF.js viewer.',
 );
 assert.ok(
   polyfillsImportIndex < viewerImportIndex,
@@ -42,6 +58,19 @@ if (viewerSource.includes('getOrInsertComputed')) {
     polyfillsSource,
     /WeakMap\.prototype\.getOrInsertComputed/,
     'PDF.js uses WeakMap.prototype.getOrInsertComputed, so lib/polyfills.mjs must patch WeakMap.',
+  );
+}
+assert.match(
+  mainSource,
+  /globalThis\.pdfjsWorker = pdfjsWorker/,
+  'lib/main.mjs must expose PDF.js worker globals to avoid slow worker fallback.',
+);
+
+if (viewerSource.includes('RegExp.escape')) {
+  assert.match(
+    polyfillsSource,
+    /RegExp\.escape/,
+    'PDF.js uses RegExp.escape, so lib/polyfills.mjs must patch RegExp.',
   );
 }
 
@@ -98,6 +127,13 @@ assert.equal(
     WeakMap.prototype,
     'getOrInsertComputed',
   ),
+  false,
+);
+assert.equal(RegExp.escape('a+b?'), '\\x61\\+b\\?');
+assert.equal(RegExp.escape(' space'), '\\x20space');
+assert.equal(RegExp.escape('foo-bar'), '\\x66oo\\x2dbar');
+assert.equal(
+  Object.prototype.propertyIsEnumerable.call(RegExp, 'escape'),
   false,
 );
 

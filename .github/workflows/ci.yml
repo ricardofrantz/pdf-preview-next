@@ -43,6 +43,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Compile test runtime
+        run: npm run compile
+
       - name: Check PDF.js runtime compatibility
         run: npm run test:compat
 
