@@ -149,4 +149,29 @@ export async function assertPolyfillsWork(
     ),
     false,
   );
+  const regexpWithEscape = RegExp as RegExpConstructor & {
+    escape(value: string): string;
+  };
+  const uint8ArrayWithBase64 = Uint8Array as Uint8ArrayConstructor & {
+    fromBase64(value: string): Uint8Array;
+  };
+  assert.strictEqual(regexpWithEscape.escape('a+b?'), '\\x61\\+b\\?');
+  assert.deepStrictEqual(
+    [...uint8ArrayWithBase64.fromBase64('AQID')],
+    [1, 2, 3],
+  );
+  assert.strictEqual(
+    (
+      new Uint8Array([1, 2, 3]) as Uint8Array & { toBase64(): string }
+    ).toBase64(),
+    'AQID',
+  );
+  if (typeof Response !== 'undefined') {
+    const response = new Response(new Uint8Array([1, 2, 3])) as Response & {
+      bytes(): Promise<Uint8Array>;
+    };
+    assert.strictEqual(typeof response.bytes, 'function');
+    const bytes = await response.bytes();
+    assert.deepStrictEqual([...bytes], [1, 2, 3]);
+  }
 }

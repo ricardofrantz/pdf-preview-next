@@ -530,7 +530,6 @@ export class PdfPreview extends Disposable {
     const resolveDir = (...parts: string[]): string => `${resolve(...parts)}/`;
 
     const pdfjsDir = ['lib', 'pdfjs'];
-    const buildDir = [...pdfjsDir, 'build'];
 
     const pdfConfig = vscode.workspace.getConfiguration(
       'pdf-preview',
@@ -544,7 +543,7 @@ export class PdfPreview extends Disposable {
       path: docPath.toString(),
       standardFontDataUrl: resolveDir(...pdfjsDir, 'standard_fonts'),
       wasmUrl: resolveDir(...pdfjsDir, 'wasm'),
-      workerSrc: resolve(...buildDir, 'pdf.worker.min.mjs'),
+      workerSrc: resolve('lib', 'pdf.worker-wrapper.mjs'),
       defaults: {
         cursor: pdfConfig.get<string>('default.cursor'),
         scale: pdfConfig.get<string>('default.scale'),

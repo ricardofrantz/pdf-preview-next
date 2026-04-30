@@ -6,6 +6,8 @@ import { assertViewerContract } from './viewer_contract.mjs';
 const mainSource = await readFile('lib/main.mjs', 'utf8');
 const polyfillsSource = await readFile('lib/polyfills.mjs', 'utf8');
 const viewerSource = await readFile('lib/pdfjs/web/pdf_viewer.mjs', 'utf8');
+const workerSource = await readFile('lib/pdfjs/build/pdf.worker.min.mjs', 'utf8');
+const workerWrapperSource = await readFile('lib/pdf.worker-wrapper.mjs', 'utf8');
 const webviewSource = await readFile('out/src/pdfPreview.js', 'utf8');
 const stylesSource = await readFile('lib/pdf.css', 'utf8');
 
@@ -73,11 +75,37 @@ if (viewerSource.includes('RegExp.escape')) {
     'PDF.js uses RegExp.escape, so lib/polyfills.mjs must patch RegExp.',
   );
 }
-if (viewerSource.includes('.bytes()')) {
+assert.match(
+  workerWrapperSource,
+  /import ['"]\.\/polyfills\.mjs['"];/,
+  'PDF.js worker wrapper must import polyfills before the worker bundle.',
+);
+assert.match(
+  webviewSource,
+  /pdf\.worker-wrapper\.mjs/,
+  'Webview configuration must point workerSrc at the polyfilled worker wrapper.',
+);
+
+const runtimeSources = `${viewerSource}\n${workerSource}`;
+if (runtimeSources.includes('.bytes()')) {
   assert.match(
     polyfillsSource,
     /Response\.prototype\.bytes/,
     'PDF.js uses Response.prototype.bytes, so lib/polyfills.mjs must patch Response.',
+  );
+}
+if (runtimeSources.includes('fromBase64')) {
+  assert.match(
+    polyfillsSource,
+    /Uint8Array\.fromBase64/,
+    'PDF.js uses Uint8Array.fromBase64, so lib/polyfills.mjs must patch Uint8Array.',
+  );
+}
+if (runtimeSources.includes('toBase64')) {
+  assert.match(
+    polyfillsSource,
+    /Uint8Array\.prototype\.toBase64/,
+    'PDF.js uses Uint8Array.prototype.toBase64, so lib/polyfills.mjs must patch Uint8Array.',
   );
 }
 
@@ -143,6 +171,9 @@ assert.equal(
   Object.prototype.propertyIsEnumerable.call(RegExp, 'escape'),
   false,
 );
+assert.equal(typeof Uint8Array.fromBase64, 'function');
+assert.deepEqual([...Uint8Array.fromBase64('AQID')], [1, 2, 3]);
+assert.equal(new Uint8Array([1, 2, 3]).toBase64(), 'AQID');
 if (typeof Response !== 'undefined') {
   assert.equal(typeof Response.prototype.bytes, 'function');
   const bytes = await new Response(new Uint8Array([1, 2, 3])).bytes();

@@ -905,6 +905,11 @@ export async function run(): Promise<void> {
   );
   assert.match(
     viewerScriptText,
+    /acceptedPdfDocument[\s\S]*?loadingPdfDocument/,
+    'Reload rollback must distinguish accepted documents from in-flight candidates.',
+  );
+  assert.match(
+    viewerScriptText,
     /candidateDocument[\s\S]*?!acceptedDocument[\s\S]*?candidateDocument !== this\.pdfDocument[\s\S]*?await candidateDocument\.destroy\(\)/,
     'Rejected replacement documents must be destroyed after rollback.',
   );
@@ -1152,7 +1157,17 @@ export async function run(): Promise<void> {
   assert.match(polyfillsScriptText, /WeakMap\.prototype\.getOrInsertComputed/);
   assert.match(polyfillsScriptText, /RegExp\.escape/);
   assert.match(polyfillsScriptText, /Response\.prototype\.bytes/);
+  assert.match(polyfillsScriptText, /Uint8Array\.fromBase64/);
+  assert.match(polyfillsScriptText, /Uint8Array\.prototype\.toBase64/);
   await assertPolyfillsWork(extension);
+
+  const workerWrapperSourceText = await readExtensionFile(
+    extension,
+    'lib',
+    'pdf.worker-wrapper.mjs',
+  );
+  assert.match(workerWrapperSourceText, /import ['"]\.\/polyfills\.mjs['"];/);
+  assert.match(webviewSourceText, /pdf\.worker-wrapper\.mjs/);
 
   const pdfViewerSourceText = await readExtensionFile(
     extension,
@@ -1175,11 +1190,33 @@ export async function run(): Promise<void> {
       'PDF.js viewer uses RegExp.escape, so the extension must ship the polyfill.',
     );
   }
-  if (pdfViewerSourceText.includes('.bytes()')) {
+  const pdfWorkerSourceText = await readExtensionFile(
+    extension,
+    'lib',
+    'pdfjs',
+    'build',
+    'pdf.worker.min.mjs',
+  );
+  const pdfRuntimeSourceText = `${pdfViewerSourceText}\n${pdfWorkerSourceText}`;
+  if (pdfRuntimeSourceText.includes('.bytes()')) {
     assert.match(
       polyfillsScriptText,
       /Response\.prototype\.bytes/,
-      'PDF.js viewer uses Response.prototype.bytes, so the extension must ship the polyfill.',
+      'PDF.js runtime uses Response.prototype.bytes, so the extension must ship the polyfill.',
+    );
+  }
+  if (pdfRuntimeSourceText.includes('fromBase64')) {
+    assert.match(
+      polyfillsScriptText,
+      /Uint8Array\.fromBase64/,
+      'PDF.js runtime uses Uint8Array.fromBase64, so the extension must ship the polyfill.',
+    );
+  }
+  if (pdfRuntimeSourceText.includes('toBase64')) {
+    assert.match(
+      polyfillsScriptText,
+      /Uint8Array\.prototype\.toBase64/,
+      'PDF.js runtime uses Uint8Array.prototype.toBase64, so the extension must ship the polyfill.',
     );
   }
 

@@ -211,6 +211,11 @@ export function assertViewerContract({
     );
     assert.match(
       viewerScriptSource,
+      /acceptedPdfDocument[\s\S]*?loadingPdfDocument/,
+      `${context}: reload rollback must distinguish accepted documents from in-flight candidates.`,
+    );
+    assert.match(
+      viewerScriptSource,
       /candidateDocument[\s\S]*?!acceptedDocument[\s\S]*?candidateDocument !== this\.pdfDocument[\s\S]*?await candidateDocument\.destroy\(\)/,
       `${context}: rejected replacement documents must be destroyed after rollback.`,
     );

@@ -32,6 +32,7 @@ export const requiredEntries = [
   'extension/lib/main.mjs',
   'extension/lib/pdf.css',
   'extension/lib/polyfills.mjs',
+  'extension/lib/pdf.worker-wrapper.mjs',
   'extension/lib/pdfjs/build/pdf.min.mjs',
   'extension/lib/pdfjs/build/pdf.worker.min.mjs',
   'extension/lib/pdfjs/web/pdf_viewer.css',
