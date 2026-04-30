@@ -860,6 +860,31 @@ export async function run(): Promise<void> {
   );
   assert.match(
     viewerScriptText,
+    /const THUMBNAIL_MAX_RENDER_JOBS = 3;/,
+    'Thumbnail rendering must bound in-flight PDF.js render tasks.',
+  );
+  assert.match(
+    viewerScriptText,
+    /await pagesInit;[\s\S]*?if \(!this\.isCurrentLoad\(token, pdfDocument\)\) {[\s\S]*?const outlinePopulated = await this\.populateOutline[\s\S]*?if \(!outlinePopulated \|\| !this\.isCurrentLoad\(token, pdfDocument\)\)/,
+    'Superseded loads must stop after async page and outline phases before mutating UI.',
+  );
+  assert.match(
+    viewerScriptText,
+    /flushPersistViewState\(\)\s*{[\s\S]*?vscode\.postMessage\({[\s\S]*?type: ['"]view-state['"][\s\S]*?state: this\.captureViewState\(\)/,
+    'Debounced view-state persistence must be flushable before webview teardown.',
+  );
+  assert.match(
+    viewerScriptText,
+    /cancelThumbnailJobs\(\)\s*{[\s\S]*?job\.renderTask\?\.cancel\?\.\(\)[\s\S]*?this\.thumbnailRenderJobs\.clear\(\)/,
+    'Thumbnail render tasks must be cancellable during reload/reset.',
+  );
+  assert.match(
+    viewerScriptText,
+    /if \(this\.thumbnailRenderJobs\.get\(pageNumber\) === job\) {[\s\S]*?this\.thumbnailRenderJobs\.delete\(pageNumber\)/,
+    'Stale thumbnail render completions must not clear newer render jobs.',
+  );
+  assert.match(
+    viewerScriptText,
     /new IntersectionObserver\([\s\S]*?root: this\.elements\.thumbnailPanel/,
     'Thumbnail rendering should be IntersectionObserver-driven.',
   );

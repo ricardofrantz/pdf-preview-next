@@ -176,6 +176,31 @@ export function assertViewerContract({
     );
     assert.match(
       viewerScriptSource,
+      /const THUMBNAIL_MAX_RENDER_JOBS = 3;/,
+      `${context}: thumbnail rendering must bound in-flight PDF.js render tasks.`,
+    );
+    assert.match(
+      viewerScriptSource,
+      /await pagesInit;[\s\S]*?if \(!this\.isCurrentLoad\(token, pdfDocument\)\) {[\s\S]*?const outlinePopulated = await this\.populateOutline[\s\S]*?if \(!outlinePopulated \|\| !this\.isCurrentLoad\(token, pdfDocument\)\)/,
+      `${context}: superseded loads must stop after async page/outline phases before mutating UI.`,
+    );
+    assert.match(
+      viewerScriptSource,
+      /flushPersistViewState\(\)\s*{[\s\S]*?vscode\.postMessage\({[\s\S]*?type: ['"]view-state['"][\s\S]*?state: this\.captureViewState\(\)/,
+      `${context}: debounced view-state persistence must be flushable before webview teardown.`,
+    );
+    assert.match(
+      viewerScriptSource,
+      /cancelThumbnailJobs\(\)\s*{[\s\S]*?job\.renderTask\?\.cancel\?\.\(\)[\s\S]*?this\.thumbnailRenderJobs\.clear\(\)/,
+      `${context}: thumbnail render tasks must be cancellable during reload/reset.`,
+    );
+    assert.match(
+      viewerScriptSource,
+      /if \(this\.thumbnailRenderJobs\.get\(pageNumber\) === job\) {[\s\S]*?this\.thumbnailRenderJobs\.delete\(pageNumber\)/,
+      `${context}: stale thumbnail render completions must not clear newer jobs.`,
+    );
+    assert.match(
+      viewerScriptSource,
       /new IntersectionObserver\([\s\S]*?root: this\.elements\.thumbnailPanel/,
       `${context}: thumbnail rendering must be driven by sidebar visibility, not all pages at once.`,
     );
