@@ -216,6 +216,11 @@ export function assertViewerContract({
     );
     assert.match(
       viewerScriptSource,
+      /if \(previousDocument && candidateDocument && !acceptedDocument\) {[\s\S]*?await this\.restorePreviousDocument\(previousDocument, viewState, token\)/,
+      `${context}: failed replacement documents must restore the last accepted document.`,
+    );
+    assert.match(
+      viewerScriptSource,
       /candidateDocument[\s\S]*?!acceptedDocument[\s\S]*?candidateDocument !== this\.pdfDocument[\s\S]*?await candidateDocument\.destroy\(\)/,
       `${context}: rejected replacement documents must be destroyed after rollback.`,
     );

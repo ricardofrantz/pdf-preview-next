@@ -910,6 +910,11 @@ export async function run(): Promise<void> {
   );
   assert.match(
     viewerScriptText,
+    /if \(previousDocument && candidateDocument && !acceptedDocument\) {[\s\S]*?await this\.restorePreviousDocument\(previousDocument, viewState, token\)/,
+    'Failed replacement documents must restore the last accepted document.',
+  );
+  assert.match(
+    viewerScriptText,
     /candidateDocument[\s\S]*?!acceptedDocument[\s\S]*?candidateDocument !== this\.pdfDocument[\s\S]*?await candidateDocument\.destroy\(\)/,
     'Rejected replacement documents must be destroyed after rollback.',
   );
