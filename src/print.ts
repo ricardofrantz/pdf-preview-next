@@ -114,10 +114,19 @@ export function parsePrintCommand(
   return { command, args: expanded.slice(1) };
 }
 
+export function printCommandForResource(resource: vscode.Uri): string {
+  const config = vscode.workspace.getConfiguration('pdf-preview', resource);
+  if (vscode.workspace.isTrusted) {
+    return (config.get<string>('printCommand') ?? '').trim();
+  }
+
+  const inspected = config.inspect<string>('printCommand');
+  return (inspected?.globalValue ?? inspected?.defaultValue ?? '').trim();
+}
+
 export async function printPdf(resource: vscode.Uri): Promise<void> {
   const filePath = resource.fsPath;
-  const config = vscode.workspace.getConfiguration('pdf-preview');
-  const customCommand = (config.get<string>('printCommand') ?? '').trim();
+  const customCommand = printCommandForResource(resource);
 
   if (customCommand) {
     const parsed = parsePrintCommand(customCommand, filePath);

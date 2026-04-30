@@ -61,11 +61,13 @@ To make VS Code use this viewer for PDFs:
 | `pdf-preview.reload.debounceMs`    | window   | `800`      | Delay after file-change notifications before refreshing.                                |
 | `pdf-preview.appearance.theme`     | resource | `auto`     | `auto`, `light`, `dark`, `night`, `reader`, `dark-pages`, or `inverted`.                |
 | `pdf-preview.appearance.pageGap`   | resource | `normal`   | `compact`, `normal`, or `wide`.                                                         |
-| `pdf-preview.printCommand`         | resource | empty      | Custom print command. Use `{{file}}` for the PDF path; otherwise the path is appended.  |
+| `pdf-preview.printCommand`         | resource | empty      | Restricted custom print command. Use `{{file}}` for the PDF path; otherwise the path is appended. Workspace/resource values are ignored when the workspace is untrusted. |
 
 Resource-scoped settings can be overridden per workspace folder or PDF resource
 where VS Code supports resource configuration. Reload settings remain global
-because they control file watching rather than document rendering defaults.
+because they control file watching rather than document rendering defaults. Custom
+print commands execute local programs without a shell and are restricted under
+VS Code Workspace Trust.
 
 ## Commands And Controls
 

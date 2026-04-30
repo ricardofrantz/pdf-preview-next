@@ -540,6 +540,11 @@ export async function run(): Promise<void> {
     'dark-pages',
     'inverted',
   ]);
+  assert.deepStrictEqual(extension.packageJSON.capabilities, {
+    untrustedWorkspaces: { supported: true },
+  });
+  assert.strictEqual(extension.packageJSON.contributes.capabilities, undefined);
+
   const configurationProperties =
     extension.packageJSON.contributes.configuration.properties;
   const resourceScopedSettings = [
@@ -580,6 +585,11 @@ export async function run(): Promise<void> {
       'pdf-preview.appearance.pageGap': 'normal',
       'pdf-preview.printCommand': '',
     },
+  );
+
+  assert.strictEqual(
+    configurationProperties['pdf-preview.printCommand'].restricted,
+    true,
   );
 
   const commandIds = new Set(
@@ -1047,6 +1057,16 @@ export async function run(): Promise<void> {
     printSourceText,
     /spawn\(command, args, \{ stdio: ['"]ignore['"] \}\)/,
     'Print utility must execute custom commands without a shell.',
+  );
+  assert.match(
+    printSourceText,
+    /vscode\.workspace\.isTrusted/,
+    'Print utility must gate custom commands on Workspace Trust.',
+  );
+  assert.match(
+    printSourceText,
+    /config\.inspect\('printCommand'\)/,
+    'Print utility must inspect printCommand scopes in untrusted workspaces.',
   );
 
   const webviewContractSourceText = await readExtensionFile(

@@ -39,13 +39,13 @@
     "onCommand:pdf-preview.print",
     "onCommand:pdf-preview.resetViewState"
   ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
   "main": "./dist/extension.js",
   "contributes": {
-    "capabilities": {
-      "untrustedWorkspaces": {
-        "supported": true
-      }
-    },
     "customEditors": [
       {
         "viewType": "pdf-preview-next.preview",
@@ -180,7 +180,8 @@
           "markdownDescription": "Custom command line for printing PDFs. Use `{{file}}` as a placeholder for the PDF path; when omitted, the path is appended as the last argument. The command is executed without a shell. When empty, the extension tries `lp` then falls back to the system viewer.",
           "type": "string",
           "scope": "resource",
-          "default": ""
+          "default": "",
+          "restricted": true
         }
       }
     }
