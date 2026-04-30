@@ -1146,6 +1146,7 @@ export async function run(): Promise<void> {
   assert.match(polyfillsScriptText, /Map\.prototype\.getOrInsertComputed/);
   assert.match(polyfillsScriptText, /WeakMap\.prototype\.getOrInsertComputed/);
   assert.match(polyfillsScriptText, /RegExp\.escape/);
+  assert.match(polyfillsScriptText, /Response\.prototype\.bytes/);
   await assertPolyfillsWork(extension);
 
   const pdfViewerSourceText = await readExtensionFile(
@@ -1167,6 +1168,13 @@ export async function run(): Promise<void> {
       polyfillsScriptText,
       /RegExp\.escape/,
       'PDF.js viewer uses RegExp.escape, so the extension must ship the polyfill.',
+    );
+  }
+  if (pdfViewerSourceText.includes('.bytes()')) {
+    assert.match(
+      polyfillsScriptText,
+      /Response\.prototype\.bytes/,
+      'PDF.js viewer uses Response.prototype.bytes, so the extension must ship the polyfill.',
     );
   }
 

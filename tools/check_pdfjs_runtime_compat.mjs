@@ -73,6 +73,13 @@ if (viewerSource.includes('RegExp.escape')) {
     'PDF.js uses RegExp.escape, so lib/polyfills.mjs must patch RegExp.',
   );
 }
+if (viewerSource.includes('.bytes()')) {
+  assert.match(
+    polyfillsSource,
+    /Response\.prototype\.bytes/,
+    'PDF.js uses Response.prototype.bytes, so lib/polyfills.mjs must patch Response.',
+  );
+}
 
 await import(pathToFileURL('lib/polyfills.mjs').href);
 
@@ -136,6 +143,11 @@ assert.equal(
   Object.prototype.propertyIsEnumerable.call(RegExp, 'escape'),
   false,
 );
+if (typeof Response !== 'undefined') {
+  assert.equal(typeof Response.prototype.bytes, 'function');
+  const bytes = await new Response(new Uint8Array([1, 2, 3])).bytes();
+  assert.deepEqual([...bytes], [1, 2, 3]);
+}
 
 assertViewerContract({
   webviewSource,

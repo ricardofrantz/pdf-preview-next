@@ -33,6 +33,8 @@ jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    outputs:
+      tag_commit: ${{ steps.validate_release.outputs.tag_commit }}
 
     steps:
       - name: Check out release tag
@@ -48,6 +50,7 @@ jobs:
           cache: npm
 
       - name: Validate release tag and package version
+        id: validate_release
         run: |
           git fetch --force --tags
           VERSION="${RELEASE_TAG#v}"
@@ -62,6 +65,7 @@ jobs:
             echo "package.json version $PACKAGE_VERSION does not match release tag $RELEASE_TAG."
             exit 1
           fi
+          echo "tag_commit=$TAG_COMMIT" >> "$GITHUB_OUTPUT"
 
       - name: Install dependencies
         run: npm ci
@@ -117,10 +121,10 @@ jobs:
       url: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ inputs.release_tag }}
 
     steps:
-      - name: Check out release tag
+      - name: Check out verified release commit
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
-          ref: ${{ inputs.release_tag }}
+          ref: ${{ needs.release.outputs.tag_commit }}
           fetch-depth: 0
 
       - name: Set up Node
@@ -128,6 +132,19 @@ jobs:
         with:
           node-version: 22
           cache: npm
+
+      - name: Re-verify release tag after approval
+        run: |
+          git fetch --force --tags
+          TAG_COMMIT="$(git rev-list -n 1 "$RELEASE_TAG")"
+          if [ "$TAG_COMMIT" != "${{ needs.release.outputs.tag_commit }}" ]; then
+            echo "$RELEASE_TAG moved from ${{ needs.release.outputs.tag_commit }} to $TAG_COMMIT after verification."
+            exit 1
+          fi
+          if [ "$(git rev-parse HEAD)" != "${{ needs.release.outputs.tag_commit }}" ]; then
+            echo "Publish checkout does not match verified commit."
+            exit 1
+          fi
 
       - name: Install locked publish tooling
         run: npm ci
