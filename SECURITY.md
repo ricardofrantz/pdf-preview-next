@@ -13,10 +13,55 @@ Do not include exploit details in public issues.
 
 | Date       | Auditor          | Scope                                                | Result                       |
 | ---------- | ---------------- | ---------------------------------------------------- | ---------------------------- |
+| 2026-04-30 | Claude Opus 4.7  | `src/`, `lib/*.mjs`, `tools/`, workflows             | 0 actionable, 2 hardening    |
 | 2026-04-29 | Pi security pass | release workflows, packaging, risky API pattern scan | 0 actionable findings        |
 | 2026-04-27 | Claude Opus 4.7  | `src/`, CSP, vendored PDF.js, npm advisories         | 1 critical, 1 high, 2 medium |
 
-The 2026-04-27 findings are remediated across `1.3.0` and `1.4.0`.
+The 2026-04-27 findings are remediated across `1.3.0` and `1.4.0`. The
+2026-04-30 hardening items landed in the same pass.
+
+### 2026-04-30 — Claude Opus 4.7
+
+**Scope.** Repository-authored TypeScript and webview JavaScript (`src/`,
+`lib/main.mjs`, `lib/polyfills.mjs`, `lib/pdf.worker-wrapper.mjs`),
+`tools/scan_vsix.mjs`, and `.github/workflows/`. Vendored PDF.js excluded.
+
+**Method.** Pattern scan for GitHub Actions injection, shell execution APIs,
+dynamic code evaluation, browser XSS sinks, plus a manual review of the webview
+message contract, CSP construction, and PDF link path-traversal handling.
+
+**Findings.** No actionable findings. Two low-severity hardening items
+addressed in the same pass:
+
+- `release.yml` accepted any `release_tag` string from `workflow_dispatch`.
+  Added a `^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$` regex check at the top
+  of `validate_release` so malformed tags fail before `npm ci` and before any
+  shell expansion that depends on the tag value.
+- Documented the trusted-workspace `printCommand` boundary below.
+
+**Verified clean.**
+
+- Webview CSP pins `script-src` to a per-render `crypto.randomBytes(16)` nonce
+  plus `cspSource`; no `'unsafe-inline'` or `'unsafe-eval'`.
+- Host-side message handler rejects unknown types and unknown keys via the
+  closed allowlist in `src/webviewContract.ts`.
+- `resolvePdfLinkTarget` rejects URI schemes, absolute paths, and any resolved
+  target whose `path.relative` escapes the resource directory.
+- `src/print.ts` and `tools/scan_vsix.mjs` use `spawn` / `execFileSync` with
+  argument arrays; no shell expansion path.
+- All dynamic DOM writes in `lib/main.mjs` use `textContent`. The single
+  first-party `innerHTML` finding is inside vendored PDF.js and is out of
+  scope per the boundary defined here.
+
+**Trusted-workspace `printCommand`.** When the active workspace is trusted,
+`pdf-preview.printCommand` is read from workspace settings and the resolved
+binary is launched via `child_process.spawn` with an argument array.
+`spawn(command, args)` does not invoke a shell, so a hostile workspace cannot
+inject shell metacharacters, but the `command` itself is operator-controlled.
+This is by design: VS Code Workspace Trust is the established boundary. Users
+who do not trust a workspace fall back to `inspect().globalValue` /
+`defaultValue`, so a malicious `.vscode/settings.json`
+in an untrusted workspace cannot override the print command.
 
 ### 2026-04-29 — Pi security pass
 

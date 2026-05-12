@@ -53,6 +53,10 @@ jobs:
         id: validate_release
         run: |
           git fetch --force --tags
+          if ! [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "RELEASE_TAG '$RELEASE_TAG' is not a valid v<major>.<minor>.<patch>[-prerelease] tag."
+            exit 1
+          fi
           VERSION="${RELEASE_TAG#v}"
           TAG_COMMIT="$(git rev-list -n 1 "$RELEASE_TAG")"
           HEAD_COMMIT="$(git rev-parse HEAD)"
