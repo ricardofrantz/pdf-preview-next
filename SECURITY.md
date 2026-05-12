@@ -35,8 +35,8 @@ addressed in the same pass:
 
 - `release.yml` accepted any `release_tag` string from `workflow_dispatch`.
   Added a `^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$` regex check at the top
-  of `validate_release` so malformed tags fail before `npm ci` and before any
-  shell expansion that depends on the tag value.
+  of `validate_release` so malformed tags fail before `bun install` and before
+  any shell expansion that depends on the tag value.
 - Documented the trusted-workspace `printCommand` boundary below.
 
 **Verified clean.**

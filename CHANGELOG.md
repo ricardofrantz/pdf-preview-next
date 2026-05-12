@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 2.0.1 (2026/05/12)
+
+- Migrate the package manager from npm to bun; replace `package-lock.json` with
+  `bun.lock`, update all build/test/lint scripts, and update the release workflow
+  to install and verify with bun.
+- Close the 2026-04-30 security-audit hardening pass: add a semver regex guard
+  on the `release_tag` workflow input so malformed tags fail before any shell
+  expansion, and document the trusted-workspace `printCommand` boundary in
+  SECURITY.md.
+- Change the default Print action to open the PDF in the system viewer for
+  reliable native print dialogs instead of silently queueing `lp`.
+- Add `vscode-pdf Next: Print Directly to Default Printer` for advanced direct
+  printing through `pdf-preview.printCommand` or CUPS `lp`, with captured
+  diagnostics and explicit fallback messages.
+- Add a maintenance guide for dependency, PDF.js, VS Code, packaging, security,
+  and release upkeep.
+
 ## 2.0.0 (2026/04/29)
 
 - Promote the fork to a public release after the PDF.js 5 viewer hardening,
@@ -53,7 +70,7 @@
   optional no-shell `pdf-preview.printCommand` override.
 - Add local inter-PDF link handling for relative `.pdf` links, preserving
   fragments such as `#page=2` without relaxing the webview CSP.
-- Make `PDF Preview Next: Reset View State` reset the active webview
+- Make `vscode-pdf Next: Reset View State` reset the active webview
   immediately instead of waiting for the next open.
 
 ## 1.6.0 (2026/04/28)
@@ -62,7 +79,7 @@
   intentionally broken PDFs.
 - Mark PDF defaults and appearance settings as resource-scoped and read them
   with the opened PDF as the VS Code configuration scope.
-- Add `PDF Preview Next: Reset View State`, clearing only the active PDF's
+- Add `vscode-pdf Next: Reset View State`, clearing only the active PDF's
   saved page, zoom, scroll, and outline-sidebar state.
 - Add contributed-surface tests for command IDs, setting defaults, resource
   scopes, webview resource roots, and nonce-bound CSP behavior.
