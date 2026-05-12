@@ -2,7 +2,8 @@
   "name": "pdf-preview-next",
   "displayName": "vscode-pdf Next",
   "description": "Modern successor to vscode-pdf: fast, secure PDF viewing in VS Code with PDF.js 5, live reload, search, outline, dark modes, and reliable preview state.",
-  "version": "2.0.0",
+  "version": "2.0.1",
+  "packageManager": "bun@1.3.13",
   "publisher": "ricardofrantz",
   "engines": {
     "vscode": "^1.95.0",
@@ -37,6 +38,7 @@
     "onCommand:pdf-preview.openSource",
     "onCommand:pdf-preview.refreshPreview",
     "onCommand:pdf-preview.print",
+    "onCommand:pdf-preview.printDirect",
     "onCommand:pdf-preview.resetViewState"
   ],
   "capabilities": {
@@ -72,7 +74,11 @@
       },
       {
         "command": "pdf-preview.print",
-        "title": "vscode-pdf Next: Print to System"
+        "title": "vscode-pdf Next: Open in System Viewer for Printing"
+      },
+      {
+        "command": "pdf-preview.printDirect",
+        "title": "vscode-pdf Next: Print Directly to Default Printer"
       },
       {
         "command": "pdf-preview.resetViewState",
@@ -177,7 +183,7 @@
           ]
         },
         "pdf-preview.printCommand": {
-          "markdownDescription": "Custom command line for printing PDFs. Use `{{file}}` as a placeholder for the PDF path; when omitted, the path is appended as the last argument. The command is executed without a shell. When empty, the extension tries `lp` then falls back to the system viewer.",
+          "markdownDescription": "Custom command line used only by `vscode-pdf Next: Print Directly to Default Printer`. Use `{{file}}` as a placeholder for the PDF path; when omitted, the path is appended as the last argument. The command is executed without a shell. When empty, direct printing tries the default CUPS printer, then falls back to the system viewer.",
           "type": "string",
           "scope": "resource",
           "default": "",
@@ -187,16 +193,16 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run bundle",
+    "vscode:prepublish": "bun run bundle",
     "compile": "tsc -p ./",
     "bundle": "node ./esbuild.config.mjs",
     "typecheck": "tsc --noEmit -p ./",
     "watch": "node ./tools/watch_build.mjs",
     "watch:tsc": "tsc -w -p ./",
     "watch:bundle": "node ./esbuild.config.mjs --watch",
-    "pretest": "npm run bundle && npm run test:compat",
+    "pretest": "bun run bundle && bun run test:compat",
     "test": "node ./out/src/test/runTest.js",
-    "test:compat": "npm run compile && node ./tools/check_pdfjs_runtime_compat.mjs",
+    "test:compat": "bun run compile && node ./tools/check_pdfjs_runtime_compat.mjs",
     "lint": "eslint ./src",
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
