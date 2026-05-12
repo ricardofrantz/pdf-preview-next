@@ -601,6 +601,7 @@ export async function run(): Promise<void> {
     'pdf-preview.openPreview',
     'pdf-preview.openSource',
     'pdf-preview.print',
+    'pdf-preview.printDirect',
     'pdf-preview.refreshPreview',
     'pdf-preview.resetViewState',
   ]);
@@ -608,6 +609,7 @@ export async function run(): Promise<void> {
     'onCommand:pdf-preview.openPreview',
     'onCommand:pdf-preview.openSource',
     'onCommand:pdf-preview.print',
+    'onCommand:pdf-preview.printDirect',
     'onCommand:pdf-preview.refreshPreview',
     'onCommand:pdf-preview.resetViewState',
     'onCustomEditor:pdf-preview-next.preview',
@@ -626,11 +628,15 @@ export async function run(): Promise<void> {
   );
   assert.strictEqual(
     commandTitles.get('pdf-preview.resetViewState'),
-    'PDF Preview Next: Reset View State',
+    'vscode-pdf Next: Reset View State',
   );
   assert.strictEqual(
     commandTitles.get('pdf-preview.print'),
-    'vscode-pdf Next: Print to System',
+    'vscode-pdf Next: Open in System Viewer for Printing',
+  );
+  assert.strictEqual(
+    commandTitles.get('pdf-preview.printDirect'),
+    'vscode-pdf Next: Print Directly to Default Printer',
   );
   assert.strictEqual(PDF_WEBVIEW_OPTIONS.retainContextWhenHidden, false);
 
@@ -759,8 +765,13 @@ export async function run(): Promise<void> {
   );
   assert.match(
     viewerStylesText,
+    /#pdf-root[^}]*container-type:\s*inline-size/,
+    '#pdf-root must provide the toolbar container query so toolbar self-styles can respond',
+  );
+  assert.doesNotMatch(
+    viewerStylesText,
     /#pdf-toolbar[^}]*container-type:\s*inline-size/,
-    '#pdf-toolbar must use container-type: inline-size for responsive queries',
+    '#pdf-toolbar must not be its own query container because container queries cannot style the container itself',
   );
   assert.match(
     viewerStylesText,
@@ -784,8 +795,43 @@ export async function run(): Promise<void> {
   );
   assert.match(
     viewerStylesText,
-    /@container\s*\(max-width:\s*720px\)[^{]*{[^}]*\.label[^}]*display:\s*none/,
-    '@container query must hide .label at 720px breakpoint',
+    /@container\s*\(max-width:\s*960px\)[^{]*{[^}]*\.label[^}]*display:\s*none/,
+    '@container query must hide .label before medium-width toolbars clip actions',
+  );
+  assert.match(
+    viewerStylesText,
+    /\.toolbar-group\.toolbar-find\s*{[^}]*flex:\s*1 1 180px;[^}]*min-width:\s*0;/s,
+    'Find toolbar group must shrink before right-side actions are clipped.',
+  );
+  assert.match(
+    viewerStylesText,
+    /\.toolbar-find input\[type='search'\]\s*{[^}]*min-width:\s*0;/s,
+    'Find input must be allowed to shrink in narrow toolbars.',
+  );
+  assert.match(
+    viewerStylesText,
+    /\.toolbar-spacer\s*{[^}]*min-width:\s*0;/s,
+    'Toolbar spacer must be shrinkable before responsive compaction.',
+  );
+  assert.match(
+    viewerStylesText,
+    /@container\s*\(max-width:\s*960px\)[\s\S]*?\.toolbar-spacer\s*{[^}]*display:\s*none;/,
+    'Toolbar spacer must collapse on medium widths so actions stay in view.',
+  );
+  assert.match(
+    viewerStylesText,
+    /@container\s*\(max-width:\s*520px\)[\s\S]*?select\s*{[^}]*min-width:\s*72px;/,
+    'Toolbar zoom select must compact at narrow widths.',
+  );
+  assert.match(
+    viewerStylesText,
+    /@container\s*\(max-width:\s*420px\)[\s\S]*?\.toolbar-find[\s\S]*?display:\s*none;/,
+    'Very narrow toolbar mode must collapse the find group rather than clipping primary actions.',
+  );
+  assert.match(
+    viewerStylesText,
+    /@container\s*\(max-width:\s*420px\)[\s\S]*?#zoomOut,[\s\S]*?#zoomIn[\s\S]*?display:\s*none;/,
+    'Very narrow toolbar mode must collapse secondary zoom buttons rather than clipping primary actions.',
   );
   assert.match(
     viewerStylesText,
@@ -1063,7 +1109,7 @@ export async function run(): Promise<void> {
   assert.match(
     providerSourceText,
     /printPdf\(/,
-    'Print command must dispatch through the host-side print utility.',
+    'Print command must dispatch through the host-side system-viewer print utility.',
   );
 
   const printSourceText = await readExtensionFile(
@@ -1074,13 +1120,13 @@ export async function run(): Promise<void> {
   );
   assert.match(
     printSourceText,
-    /spawnAsync\('lp',/,
-    'Print utility must try lp first.',
+    /runCommand\('lp',/,
+    'Direct print utility must try lp after preflight.',
   );
   assert.match(
     printSourceText,
     /openExternal\(resource\)/,
-    'Print utility must fall back to system viewer.',
+    'Default print utility must open the system viewer.',
   );
   assert.match(
     printSourceText,
@@ -1089,8 +1135,8 @@ export async function run(): Promise<void> {
   );
   assert.match(
     printSourceText,
-    /spawn\(command, args, \{ stdio: ['"]ignore['"] \}\)/,
-    'Print utility must execute custom commands without a shell.',
+    /spawn\(command, args, \{ stdio: \['ignore', 'pipe', 'pipe'\] \}\)/,
+    'Print utility must execute custom commands without a shell while capturing diagnostics.',
   );
   assert.match(
     printSourceText,

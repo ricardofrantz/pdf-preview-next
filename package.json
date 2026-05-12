@@ -82,7 +82,7 @@
       },
       {
         "command": "pdf-preview.resetViewState",
-        "title": "PDF Preview Next: Reset View State"
+        "title": "vscode-pdf Next: Reset View State"
       }
     ],
     "configuration": {

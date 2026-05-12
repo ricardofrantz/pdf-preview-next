@@ -94,8 +94,13 @@ export function assertViewerContract({
   );
   assert.match(
     stylesSource,
+    /#pdf-root[^}]*container-type:\s*inline-size/,
+    `${context}: #pdf-root must use container-type: inline-size for responsive toolbar queries.`,
+  );
+  assert.doesNotMatch(
+    stylesSource,
     /#pdf-toolbar[^}]*container-type:\s*inline-size/,
-    `${context}: #pdf-toolbar must use container-type: inline-size.`,
+    `${context}: #pdf-toolbar must not be its own query container because container queries cannot style the container itself.`,
   );
   assert.match(
     stylesSource,
@@ -119,8 +124,48 @@ export function assertViewerContract({
   );
   assert.match(
     stylesSource,
-    /@container\s*\(max-width:\s*720px\)[^{]*{[^}]*\.label[^}]*display:\s*none/,
-    `${context}: @container query must hide .label at 720px.`,
+    /@container\s*\(max-width:\s*960px\)[^{]*{[^}]*\.label[^}]*display:\s*none/,
+    `${context}: @container query must hide labels before medium-width toolbars clip actions.`,
+  );
+  assert.match(
+    stylesSource,
+    /#pdf-root[^}]*container-type:\s*inline-size/,
+    `${context}: pdf root must provide the toolbar container query so toolbar self-styles can respond.`,
+  );
+  assert.doesNotMatch(
+    stylesSource,
+    /#pdf-toolbar[^}]*container-type:\s*inline-size/,
+    `${context}: toolbar must not be its own query container because container queries cannot style the container itself.`,
+  );
+  assert.match(
+    stylesSource,
+    /\.toolbar-group\.toolbar-find\s*{[^}]*flex:\s*1 1 180px;[^}]*min-width:\s*0;/s,
+    `${context}: find toolbar group must shrink before right-side actions are clipped.`,
+  );
+  assert.match(
+    stylesSource,
+    /\.toolbar-find input\[type='search'\]\s*{[^}]*min-width:\s*0;/s,
+    `${context}: find input must be allowed to shrink in narrow toolbars.`,
+  );
+  assert.match(
+    stylesSource,
+    /\.toolbar-spacer\s*{[^}]*min-width:\s*0;/s,
+    `${context}: toolbar spacer must be shrinkable before responsive compaction.`,
+  );
+  assert.match(
+    stylesSource,
+    /@container\s*\(max-width:\s*960px\)[\s\S]*?\.toolbar-spacer\s*{[^}]*display:\s*none;/,
+    `${context}: toolbar spacer must collapse on medium widths so actions stay in view.`,
+  );
+  assert.match(
+    stylesSource,
+    /@container\s*\(max-width:\s*420px\)[\s\S]*?\.toolbar-find[\s\S]*?display:\s*none;/,
+    `${context}: very narrow toolbar mode must collapse the find group rather than clipping primary actions.`,
+  );
+  assert.match(
+    stylesSource,
+    /@container\s*\(max-width:\s*420px\)[\s\S]*?#zoomOut,[\s\S]*?#zoomIn[\s\S]*?display:\s*none;/,
+    `${context}: very narrow toolbar mode must collapse secondary zoom buttons rather than clipping primary actions.`,
   );
   assert.match(
     stylesSource,

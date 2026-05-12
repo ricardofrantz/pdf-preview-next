@@ -64,6 +64,9 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('pdf-preview.print', async () => {
       await provider.printActivePreview();
     }),
+    vscode.commands.registerCommand('pdf-preview.printDirect', async () => {
+      await provider.printDirectActivePreview();
+    }),
     vscode.commands.registerCommand('pdf-preview.resetViewState', async () => {
       await provider.resetViewStateForActivePreview();
     }),

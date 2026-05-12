@@ -149,7 +149,7 @@ export const PDF_VIEWER_BODY = `<body>
           <svg class="icon" width="16" height="16"><use href="#icon-list-tree"/></svg>
           <span class="label">Outline</span>
         </button>
-        <button id="print" class="icon-button" type="button" title="Print PDF" aria-label="Print PDF">
+        <button id="print" class="icon-button" type="button" title="Open in system viewer for printing" aria-label="Open in system viewer for printing">
           <svg class="icon" width="16" height="16"><use href="#icon-printer"/></svg>
           <span class="label">Print</span>
         </button>
@@ -456,7 +456,11 @@ export class PdfPreview extends Disposable {
   }
 
   public async openExternal(): Promise<void> {
-    await vscode.env.openExternal(this.resource);
+    const openTarget =
+      this.resource.scheme === 'file'
+        ? vscode.Uri.file(this.resource.fsPath)
+        : this.resource.with({ fragment: '', query: '' });
+    await vscode.env.openExternal(openTarget);
   }
 
   public async openPdfLink(href: string): Promise<void> {

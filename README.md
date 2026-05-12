@@ -36,7 +36,7 @@ code --install-extension ricardofrantz.pdf-preview-next
 Download the VSIX from the GitHub release and install it directly:
 
 ```bash
-code --install-extension pdf-preview-next-2.0.0.vsix --force
+code --install-extension pdf-preview-next-<version>.vsix --force
 ```
 
 To make VS Code use this viewer for PDFs:
@@ -67,7 +67,9 @@ Resource-scoped settings can be overridden per workspace folder or PDF resource
 where VS Code supports resource configuration. Reload settings remain global
 because they control file watching rather than document rendering defaults. Custom
 print commands execute local programs without a shell and are restricted under
-VS Code Workspace Trust.
+VS Code Workspace Trust. The toolbar Print action deliberately opens the PDF in
+the system viewer; direct queue printing is available through the separate
+`vscode-pdf Next: Print Directly to Default Printer` command.
 
 ## Commands And Controls
 
@@ -76,12 +78,13 @@ VS Code Workspace Trust.
 | `vscode-pdf Next: Open Preview`      | Open the selected PDF with this viewer.                                                          |
 | `vscode-pdf Next: Open Externally`   | Open the active PDF with the system PDF handler.                                                 |
 | `vscode-pdf Next: Refresh Preview`   | Refresh the active preview without losing page, zoom, scroll, or sidebar state.                  |
-| `vscode-pdf Next: Print to System`   | Print with `pdf-preview.printCommand`, `lp`, or the system viewer fallback.                      |
-| `PDF Preview Next: Reset View State` | Clear saved page, zoom, scroll, sidebar visibility, and active sidebar panel for the active PDF. |
+| `vscode-pdf Next: Open in System Viewer for Printing` | Open the PDF in Preview/default PDF app so the user can print with native options. |
+| `vscode-pdf Next: Print Directly to Default Printer` | Advanced: run `pdf-preview.printCommand` or submit to the default CUPS printer with diagnostics. |
+| `vscode-pdf Next: Reset View State` | Clear saved page, zoom, scroll, sidebar visibility, and active sidebar panel for the active PDF. |
 | Toolbar `External`                   | Open the PDF with the system PDF handler.                                                        |
 | Toolbar page-mode button             | Cycle Clear, Night, Reader, and Invert modes.                                                    |
 | Toolbar sidebar button               | Show or hide outline/bookmark and thumbnail panels.                                              |
-| Toolbar `Print`                      | Use the same host-side print path as the command.                                                |
+| Toolbar `Print`                      | Open the PDF in the system viewer for reliable native printing.                                  |
 | `Ctrl+R` / `Cmd+R`                   | Refresh the current PDF.                                                                         |
 | `j/k/h/l`                            | Scroll.                                                                                          |
 | `n/p` or `./,`                       | Move pages.                                                                                      |
@@ -104,24 +107,24 @@ The current runtime uses `pdfjs-dist@5.6.205` with:
 ## Build From Source
 
 ```bash
-npm ci
-npm run typecheck
-npm run lint
-npm test
-npm run package -- --no-dependencies
-npm run package:scan -- pdf-preview-next-2.0.0.vsix
+bun install --frozen-lockfile
+bun run typecheck
+bun run lint
+bun run test
+bun run package -- --no-dependencies
+bun run package:scan -- pdf-preview-next-<version>.vsix
 ```
 
 Useful scripts:
 
 | Script                           | Purpose                                               |
 | -------------------------------- | ----------------------------------------------------- |
-| `npm run compile`                | Compile TypeScript to `out/` for the test runner.     |
-| `npm run bundle`                 | Bundle the extension host to `dist/extension.js`.     |
-| `npm run typecheck`              | Run TypeScript without emitting files.                |
-| `npm run watch`                  | Run TypeScript and esbuild watchers together.         |
-| `npm run package:scan:test`      | Unit-test the VSIX scanner matchers.                  |
-| `npm run package:scan -- <vsix>` | Verify release package contents and viewer contracts. |
+| `bun run compile`                | Compile TypeScript to `out/` for the test runner.     |
+| `bun run bundle`                 | Bundle the extension host to `dist/extension.js`.     |
+| `bun run typecheck`              | Run TypeScript without emitting files.                |
+| `bun run watch`                  | Run TypeScript and esbuild watchers together.         |
+| `bun run package:scan:test`      | Unit-test the VSIX scanner matchers.                  |
+| `bun run package:scan -- <vsix>` | Verify release package contents and viewer contracts. |
 
 The release workflow is guarded for maintainers: third-party actions are pinned
 by full commit SHA, CI/release jobs use concurrency groups, and tag pushes only
@@ -131,18 +134,26 @@ require a manual `workflow_dispatch` run with `dry_run=false`, a matching
 environment. Configure that environment with required reviewers before adding
 publish tokens.
 
-## Upgrade PDF.js
+## Maintenance
+
+The extension is intentionally stable. Routine work should mostly be dependency,
+PDF.js, VS Code, packaging, and release-infrastructure upkeep rather than new
+features. See [docs/MAINTENANCE.md](docs/MAINTENANCE.md) for the update cadence,
+verification ladder, PDF.js upgrade flow, security-review triggers, and release
+checklist.
+
+### Upgrade PDF.js
 
 1. Update `tools/update_pdfjs.jsonc` with the target `pdfjs-dist` version and
    npm integrity value.
 1. Run:
 
    ```bash
-   npm run update:pdfjs
+   bun run update:pdfjs
    ```
 
-1. Verify with `npm run typecheck`, `npm run lint`, `npm test`, and
-   `npm run package:scan -- <vsix>`.
+1. Verify with `bun run typecheck`, `bun run lint`, `bun run test`, and
+   `bun run package:scan -- <vsix>`.
 
 ## Known Non-goals
 
