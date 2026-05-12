@@ -124,8 +124,13 @@ export function assertViewerContract({
   );
   assert.match(
     stylesSource,
-    /@container\s*\(max-width:\s*960px\)[^{]*{[^}]*\.label[^}]*display:\s*none/,
-    `${context}: @container query must hide labels before medium-width toolbars clip actions.`,
+    /@container\s*\(max-width:\s*1160px\)[^{]*{[^}]*\.label[^}]*display:\s*none/,
+    `${context}: @container query must hide labels before split/diff-width toolbars clip actions.`,
+  );
+  assert.match(
+    stylesSource,
+    /\.icon-button\s*{[^}]*flex-shrink:\s*0;/s,
+    `${context}: icon toolbar buttons must not shrink text into their borders.`,
   );
   assert.match(
     stylesSource,
@@ -154,7 +159,7 @@ export function assertViewerContract({
   );
   assert.match(
     stylesSource,
-    /@container\s*\(max-width:\s*960px\)[\s\S]*?\.toolbar-spacer\s*{[^}]*display:\s*none;/,
+    /@container\s*\(max-width:\s*1160px\)[\s\S]*?\.toolbar-spacer\s*{[^}]*display:\s*none;/,
     `${context}: toolbar spacer must collapse on medium widths so actions stay in view.`,
   );
   assert.match(

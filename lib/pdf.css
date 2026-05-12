@@ -152,7 +152,7 @@ select {
   background: var(--vscode-editorGroupHeader-tabsBackground);
 }
 
-@container (max-width: 960px) {
+@container (max-width: 1160px) {
   #pdf-toolbar .label {
     display: none;
   }

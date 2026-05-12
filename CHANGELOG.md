@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 2.0.2 (2026/05/12)
+
+- Fix toolbar clipping in side-by-side and Working Tree diff PDF previews by
+  compacting toolbar labels before split-pane widths cause controls to collide.
+- Keep toolbar buttons from shrinking their labels into the button borders, and
+  lock the responsive toolbar contract in both source and packaged-webview
+  checks.
+
 ## 2.0.1 (2026/05/12)
 
 - Migrate the package manager from npm to bun; replace `package-lock.json` with

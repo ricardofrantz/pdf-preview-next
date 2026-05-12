@@ -795,8 +795,13 @@ export async function run(): Promise<void> {
   );
   assert.match(
     viewerStylesText,
-    /@container\s*\(max-width:\s*960px\)[^{]*{[^}]*\.label[^}]*display:\s*none/,
-    '@container query must hide .label before medium-width toolbars clip actions',
+    /@container\s*\(max-width:\s*1160px\)[^{]*{[^}]*\.label[^}]*display:\s*none/,
+    '@container query must hide .label before split/diff-width toolbars clip actions',
+  );
+  assert.match(
+    viewerStylesText,
+    /\.icon-button\s*{[^}]*flex-shrink:\s*0;/s,
+    'Icon toolbar buttons must not shrink text into their borders.',
   );
   assert.match(
     viewerStylesText,
@@ -815,7 +820,7 @@ export async function run(): Promise<void> {
   );
   assert.match(
     viewerStylesText,
-    /@container\s*\(max-width:\s*960px\)[\s\S]*?\.toolbar-spacer\s*{[^}]*display:\s*none;/,
+    /@container\s*\(max-width:\s*1160px\)[\s\S]*?\.toolbar-spacer\s*{[^}]*display:\s*none;/,
     'Toolbar spacer must collapse on medium widths so actions stay in view.',
   );
   assert.match(
