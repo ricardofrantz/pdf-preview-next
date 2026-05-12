@@ -77,9 +77,10 @@ select:focus-visible {
 }
 
 .icon-button {
-  padding-right: 7px;
-  padding-left: 7px;
+  padding-right: 10px;
+  padding-left: 10px;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .icon-button svg {
